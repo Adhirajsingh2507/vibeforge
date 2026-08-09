@@ -1,0 +1,54 @@
+# Vibeforge
+
+Multi-agent backend + a frontend seat for the hackathon. The backend is a
+FastAPI service that runs an LLM-driven multi-agent orchestrator over a
+financial dataset and returns structured advice. **The frontend is yours to
+build** — this repo ships only the backend and its API contract so you can build
+any UI (React, Vue, plain HTML, whatever) against a stable HTTP surface.
+
+```
+vibeforge/
+├── backend/            # FastAPI + multi-agent orchestrator (run this)
+│   ├── api.py          # HTTP layer — all endpoints live here
+│   ├── service.py      # loads the model once, shared across requests
+│   ├── orchestrator.py # runs the agents, produces the advice trace
+│   ├── agents.py       # the specialist tools (budget, loans, fraud, bills…)
+│   ├── finance_engine.py  # deterministic math (no LLM)
+│   ├── financial_store.py # in-memory mutable state (profile/txns/bills/…)
+│   ├── schemas.py      # pydantic request models = your input validation rules
+│   └── requirements.txt
+├── API_CONTRACT.md     # ← read this to build the frontend
+└── README.md
+```
+
+## Run the backend
+
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# No GPU? Use the demo backend — the full API works with a CPU stub that
+# keyword-routes to the real agents. Great for frontend dev.
+GEMMA_BACKEND=demo uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Then open http://localhost:8000/health — you should get `{"status":"ok",...}`.
+
+`GEMMA_BACKEND` values: `demo` (CPU stub, recommended for frontend work),
+`auto` (Gemma on GPU if present, else silent echo), `transformers` (force GPU).
+
+## Frontend integration
+
+1. Read **API_CONTRACT.md** — every endpoint, request body, and response shape.
+2. CORS is already wide open (`*`), so a dev frontend on any port can call it.
+3. Start with `GET /dashboard` (the whole financial picture) and `POST /advise`
+   (send a question, render `answer` + the agent `trace`).
+
+## What's the "backend" actually doing
+
+`POST /advise` → orchestrator asks the LLM which specialist agents to run →
+agents return **deterministic** results (all money math is real Python, not the
+model) → an optional rule-based Judge sanity-checks → you get back an `answer`
+plus a `trace` of which agents ran and what they found. The model's raw
+chain-of-thought is stripped before it leaves the server.

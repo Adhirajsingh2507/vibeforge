@@ -1,0 +1,18 @@
+# --- core (deterministic engine + mutable store + orchestration) ---
+# stdlib only: mock_data, financial_store, finance_engine, agents, judge,
+#              orchestrator, service. No third-party deps.
+
+# --- API layer (also serves the premium SPA in web/) ---
+fastapi>=0.115
+uvicorn>=0.30
+pydantic>=2.7
+
+# --- Gemma 4 backend (GPU host: Kaggle T4 x2 / Colab) ---
+# Pinned in the Kaggle notebook's deps cell; listed here for reproducibility.
+transformers>=5.5.0
+accelerate>=1.0.0
+bitsandbytes==0.48.2
+torch  # provided by the Kaggle/Colab image; do not reinstall there
+
+# Frontend is a self-contained HTML/CSS/JS SPA in web/ -- no build step, no npm.
+# Public demo URL on Kaggle uses cloudflared (downloaded in the notebook, token-free).
