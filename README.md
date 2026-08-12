@@ -49,15 +49,22 @@ Then open http://localhost:8000/health — you should get `{"status":"ok",...}`.
 
 The whole app — FastAPI backend **and** the `web/` SPA — deploys as one Vercel
 Python function (`api/index.py`, routed by `vercel.json`). Frontend and API share
-one origin, so no CORS and no separate URL. The LLM is the hosted **Groq** API,
-so there's no GPU: set `GROQ_API_KEY` and it runs anywhere.
+one origin, so no CORS and no separate URL. The LLM is a hosted **OpenAI-compatible**
+API (NVIDIA NIM or Groq), so there's no GPU: set one key and it runs anywhere.
+
+**LLM provider** (auto-detected by which key is present):
+- **NVIDIA NIM** (default): set `NVIDIA_API_KEY`. Default model `meta/llama-3.1-8b-instruct`
+  — NIM's free-tier 70B is queued/too slow for serverless; the 8B is ~0.6s and does the
+  tool-calling well.
+- **Groq**: set `GROQ_API_KEY`. Default model `llama-3.3-70b-versatile` (fast *and* strong).
+- Override the model with `LLM_MODEL`; force a provider with `GEMMA_BACKEND=nim|groq`.
 
 **One-time setup**
 
 1. Create the Vercel project (first deploy): `vercel --prod` from the repo root,
    or link an existing one with `vercel link`. This writes `.vercel/project.json`.
-2. In the Vercel project env, add **`GROQ_API_KEY`** (and optionally `GROQ_MODEL`,
-   default `llama-3.3-70b-versatile`) for Production and Preview.
+2. In the Vercel project env, add **`NVIDIA_API_KEY`** (or `GROQ_API_KEY`) for
+   Production and Preview. Optionally set `LLM_MODEL` to override the default.
 3. Add three GitHub repo secrets so CI can deploy: `VERCEL_TOKEN`,
    `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (the last two are in `.vercel/project.json`).
 

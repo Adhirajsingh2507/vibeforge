@@ -2,8 +2,8 @@ name: CI/CD
 
 # CI on every push/PR; CD via Vercel CLI: preview on PRs, production on master.
 # Requires GitHub secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID.
-# The deployed function reads GROQ_API_KEY from the Vercel project env (set once
-# in the Vercel dashboard / `vercel env add`), not from CI.
+# The deployed function reads NVIDIA_API_KEY (or GROQ_API_KEY) from the Vercel
+# project env (set once in the dashboard / `vercel env add`), not from CI.
 
 on:
   push:

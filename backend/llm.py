@@ -5,9 +5,10 @@ transformers directly. If the Kaggle GPU dies at 3 AM, repoint LLM in one place.
 
 Backends
 --------
-GroqBackend         : hosted Groq API (OpenAI-compatible). No GPU -- the default
-                      for cloud/serverless deploys (e.g. Vercel). Uses native JSON
-                      function-calling, so it skips the Gemma wire-format regex.
+OpenAICompatBackend : any hosted OpenAI-compatible API (NVIDIA NIM, Groq). No GPU
+                      -- the default for cloud/serverless deploys (e.g. Vercel).
+                      Uses native JSON function-calling, skipping the Gemma regex.
+                      Switch provider/model via env (see PROVIDERS below).
 TransformersBackend : google/gemma-4-12B-it on a Kaggle/Colab GPU (4-bit default,
                       auto-fallback to fp16 sharded across all visible GPUs).
 EchoBackend         : no model; deterministic canned tool-calls for offline dev
@@ -40,9 +41,22 @@ from typing import Any, Callable
 
 MODEL_ID = os.environ.get("GEMMA_MODEL", "google/gemma-4-12B-it")
 
-# Groq (hosted, OpenAI-compatible). Free-tier default; override with GROQ_MODEL.
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+# Hosted, OpenAI-compatible providers. Both are free-tier and expose the same
+# /chat/completions shape, so one backend serves both -- switch via env only.
+# NIM's free-tier 70B is heavily queued (times out); its 8B is ~0.6s and does the
+# tool-calling fine, so it's the default for the serverless (Vercel) deploy.
+PROVIDERS = {
+    "nim": {
+        "base_url": "https://integrate.api.nvidia.com/v1",
+        "key_env": "NVIDIA_API_KEY",
+        "default_model": "meta/llama-3.1-8b-instruct",
+    },
+    "groq": {
+        "base_url": "https://api.groq.com/openai/v1",
+        "key_env": "GROQ_API_KEY",
+        "default_model": "llama-3.3-70b-versatile",
+    },
+}
 
 # --- tool-call parsing -------------------------------------------------------
 
@@ -242,19 +256,25 @@ class TransformersBackend:
         return GenResult(text=prose, tool_calls=tool_calls)
 
 
-class GroqBackend:
-    """Gemma/Llama-class model via Groq's hosted OpenAI-compatible API.
+class OpenAICompatBackend:
+    """Llama/Gemma-class model via any hosted OpenAI-compatible API (NIM, Groq).
 
     No GPU, no model download -- one HTTPS call per generation. This is the
-    default for cloud/serverless deploys. Groq returns native JSON tool_calls, so
-    we parse those directly instead of the Gemma <|tool_call> wire format.
+    default for cloud/serverless deploys. These APIs return native JSON tool_calls,
+    so we parse those directly instead of the Gemma <|tool_call> wire format.
     """
 
-    def __init__(self, model_id: str = GROQ_MODEL, api_key: str | None = None):
-        self.model_id = model_id
-        self.api_key = api_key or os.environ.get("GROQ_API_KEY")
+    def __init__(self, provider: str = "nim", model_id: str | None = None,
+                 api_key: str | None = None):
+        cfg = PROVIDERS.get(provider)
+        if cfg is None:
+            raise ValueError(f"unknown LLM provider {provider!r}; known: {list(PROVIDERS)}")
+        self.provider = provider
+        self.base_url = os.environ.get("LLM_BASE_URL", cfg["base_url"]).rstrip("/")
+        self.model_id = model_id or os.environ.get("LLM_MODEL", cfg["default_model"])
+        self.api_key = api_key or os.environ.get(cfg["key_env"]) or os.environ.get("LLM_API_KEY")
         if not self.api_key:
-            raise RuntimeError("GROQ_API_KEY is not set; cannot use the Groq backend.")
+            raise RuntimeError(f"{cfg['key_env']} is not set; cannot use the {provider} backend.")
         self.load_mode = "api"
 
     def generate(self, messages: list[dict], tools: list[dict] | None = None,
@@ -262,7 +282,7 @@ class GroqBackend:
                  enable_thinking: bool = False) -> GenResult:
         import httpx
 
-        # Groq wants plain-string content; our messages already are (image path unused).
+        # These APIs want plain-string content; our messages already are (image unused).
         body: dict = {
             "model": self.model_id,
             "messages": [{"role": m["role"], "content": _as_text(m["content"])} for m in messages],
@@ -273,7 +293,7 @@ class GroqBackend:
             body["tools"] = tools
             body["tool_choice"] = "auto"
 
-        r = httpx.post(GROQ_URL, json=body, timeout=60,
+        r = httpx.post(f"{self.base_url}/chat/completions", json=body, timeout=60,
                        headers={"Authorization": f"Bearer {self.api_key}"})
         r.raise_for_status()
         msg = r.json()["choices"][0]["message"]
@@ -320,19 +340,20 @@ class EchoBackend:
 
 
 def make_backend(kind: str = "auto"):
-    """kind: 'groq' | 'transformers' | 'echo' | 'auto'.
+    """kind: 'nim' | 'groq' | 'transformers' | 'echo' | 'auto'.
 
-    auto: Groq if GROQ_API_KEY is set (cloud default), else transformers if a GPU
-    is visible (Kaggle), else the echo stub.
+    auto: a hosted provider if its key is set (NIM, then Groq -- the cloud
+    default), else transformers if a GPU is visible (Kaggle), else the echo stub.
     """
-    if kind == "groq":
-        return GroqBackend()
+    if kind in PROVIDERS:
+        return OpenAICompatBackend(kind)
     if kind == "echo":
         return EchoBackend()
     if kind == "transformers":
         return TransformersBackend()
-    if os.environ.get("GROQ_API_KEY"):
-        return GroqBackend()
+    for provider, cfg in PROVIDERS.items():
+        if os.environ.get(cfg["key_env"]):
+            return OpenAICompatBackend(provider)
     try:
         import torch
         if torch.cuda.is_available():
