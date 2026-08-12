@@ -1,25 +1,50 @@
-# Vibeforge
+# Finora
 
-Multi-agent backend + a frontend seat for the hackathon. The backend is a
-FastAPI service that runs an LLM-driven multi-agent orchestrator over a
-financial dataset and returns structured advice. **The frontend is yours to
-build** — this repo ships only the backend and its API contract so you can build
-any UI (React, Vue, plain HTML, whatever) against a stable HTTP surface.
+An AI **personal CFO**: a FastAPI multi-agent orchestrator over a financial
+dataset, fronted by a minimal black-and-white SPA. Ask a money question and
+watch specialist agents (budget, loans, fraud, bills, investments, tax) reason
+about it, get judged, and produce an explainable recommendation.
+
+**Live:** https://vibeforge-cyan.vercel.app
 
 ```
-vibeforge/
-├── backend/            # FastAPI + multi-agent orchestrator (run this)
+finora/
+├── backend/            # FastAPI + multi-agent orchestrator
 │   ├── api.py          # HTTP layer — all endpoints live here
 │   ├── service.py      # loads the model once, shared across requests
 │   ├── orchestrator.py # runs the agents, produces the advice trace
 │   ├── agents.py       # the specialist tools (budget, loans, fraud, bills…)
 │   ├── finance_engine.py  # deterministic math (no LLM)
 │   ├── financial_store.py # in-memory mutable state (profile/txns/bills/…)
-│   ├── schemas.py      # pydantic request models = your input validation rules
+│   ├── judge.py        # reflection: validates findings against guardrails
+│   ├── schemas.py      # pydantic request models = input validation rules
 │   └── requirements.txt
-├── API_CONTRACT.md     # ← read this to build the frontend
+├── web/                # the SPA (vanilla JS, no build step)
+│   ├── index.html
+│   ├── app.js          # dashboard, CRUD, chat, AI-orb WebGL viz
+│   ├── tetris.js       # "The Forge" — 3D Tetris block graph (three.js)
+│   ├── agents.js       # "Agent Theatre" — live reasoning-flow map
+│   └── styles.css
+├── api/index.py        # Vercel entry — serves backend + web on one origin
+├── API_CONTRACT.md     # every endpoint, request body, response shape
 └── README.md
 ```
+
+## The frontend
+
+Six views, all monochrome glass / Helvetica, PC + mobile:
+
+- **Budget** — net worth, income/expenses/disposable, transaction ledger (CRUD).
+- **Investments** — holdings, SIP, liquidity (CRUD).
+- **Bills** — upcoming bills for the cycle (CRUD).
+- **AI Orchestrator** — chat; ask anything, see the answer + agent trace, with a
+  state-reactive WebGL particle orb.
+- **The Forge** — every monetary item as a 3D Tetris tower of solid unit blocks
+  (sub-unit remainders shown as a scaled micro-block); edits animate blocks
+  dropping in / lifting out. WebGL/three.js, orbit + pinch, hover for detail.
+- **Agent Theatre** — a live map of the multi-agent flow: the real `/advise`
+  trace staged step-by-step across an orchestrator → specialists → judge →
+  synthesis constellation.
 
 ## Run the backend
 
@@ -38,12 +63,16 @@ Then open http://localhost:8000/health — you should get `{"status":"ok",...}`.
 `GEMMA_BACKEND` values: `demo` (CPU stub, recommended for frontend work),
 `auto` (Gemma on GPU if present, else silent echo), `transformers` (force GPU).
 
-## Frontend integration
+## Frontend
 
-1. Read **API_CONTRACT.md** — every endpoint, request body, and response shape.
-2. CORS is already wide open (`*`), so a dev frontend on any port can call it.
-3. Start with `GET /dashboard` (the whole financial picture) and `POST /advise`
-   (send a question, render `answer` + the agent `trace`).
+The SPA in `web/` needs no build step. In production Vercel serves it and the
+API on one origin. For local dev, point it at any running backend via the URL:
+`http://localhost:8000/?api=http://localhost:8000` (the `?api=` override is
+persisted). Or serve `web/` statically and pass `?api=` to a remote backend —
+CORS is wide open (`*`).
+
+Data flow: `GET /dashboard` (the whole financial picture) and `POST /advise`
+(a question → `answer` + agent `trace`). See **API_CONTRACT.md** for the rest.
 
 ## Deploy (Vercel + CI/CD)
 
