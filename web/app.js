@@ -1,5 +1,5 @@
 // ============================================================
-// Vibeforge frontend. Structured UI (cards/grid/chat) + an
+// Finora frontend. Structured UI (cards/grid/chat) + an
 // AI-reactive WebGL visualization, driven by one state machine.
 // ============================================================
 
