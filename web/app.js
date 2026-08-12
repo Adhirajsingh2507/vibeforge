@@ -70,10 +70,12 @@ function openDetail(id) {
     requestAnimationFrame(() => view.classList.add('visible'));
     currentView = view;
     if (id === 'view-chat') { AIViz && AIViz.resize(); AIViz && AIViz.setState('idle'); els.chatInput.focus(); }
+    if (id === 'view-forge') window.ForgeViz && ForgeViz.open(state.dashboard);
 }
 function closeDetail() {
     if (!currentView) return;
     const view = currentView; currentView = null;
+    if (view.id === 'view-forge') window.ForgeViz && ForgeViz.close();
     view.classList.remove('visible');
     els.btnBack.classList.remove('visible');
     els.home.classList.remove('dim');
@@ -164,6 +166,9 @@ function render() {
             ${actions('bill', b.id)}
         </tr>`).join('') || '<tr><td colspan="3" class="t-empty">No bills</td></tr>';
     els.detTotalBills.textContent = formatINR(bills.total_upcoming);
+
+    // Forge: reflect any add/subtract as Tetris blocks dropping / lifting
+    if (window.ForgeViz) ForgeViz.update(state.dashboard);
 }
 
 // ---------- Chat ----------

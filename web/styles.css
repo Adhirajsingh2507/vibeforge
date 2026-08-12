@@ -106,7 +106,7 @@ body {
 .card-grid {
     flex: 1 1 auto; min-height: 0;
     display: grid; gap: clamp(12px, 1.5vw, 20px);
-    grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr;
+    grid-template-columns: repeat(5, 1fr); grid-template-rows: 1fr;
 }
 /* AI hero spans two columns for hierarchy */
 .card--ai { grid-column: span 1; }
@@ -303,6 +303,64 @@ body {
 #btn-send:active { transform: scale(0.94); }
 #btn-send:disabled { opacity: 0.4; cursor: default; transform: none; }
 
+/* ---------- Forge · 3D Tetris ---------- */
+.view-forge { display: block; }
+#forge-canvas { cursor: grab; touch-action: none; }
+#forge-canvas:active { cursor: grabbing; }
+
+.forge-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+/* projected labels positioned in JS via left/top */
+.forge-labels .flabel {
+    position: absolute; transform: translate(-50%, -100%);
+    font-family: var(--font); font-size: 11px; letter-spacing: -0.01em; white-space: nowrap;
+    padding: 4px 9px; border-radius: 999px; color: var(--ink);
+    background: rgba(10,10,12,0.55); border: 1px solid var(--line);
+    backdrop-filter: blur(10px); will-change: left, top, opacity;
+}
+.forge-labels .flabel b { font-weight: 600; }
+.forge-labels .flabel .fl-sub { color: var(--ink-3); font-size: 9.5px; margin-left: 5px; letter-spacing: 0.02em; }
+.forge-labels .fgroup {
+    position: absolute; transform: translate(-50%, -50%);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--ink-3);
+    padding: 3px 10px; border-radius: 6px; background: rgba(10,10,12,0.4); white-space: nowrap;
+}
+.forge-labels .ftick {
+    position: absolute; transform: translate(-100%, -50%);
+    font-size: 9.5px; color: var(--ink-4); font-variant-numeric: tabular-nums;
+    padding-right: 8px; white-space: nowrap;
+}
+
+.forge-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    padding: clamp(70px, 9vh, 110px) clamp(18px, 3vw, 40px) clamp(20px, 4vh, 40px);
+    display: flex; flex-direction: column; }
+.forge-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.forge-head h2 { font-size: clamp(24px, 3.2vw, 38px); font-weight: 500; letter-spacing: -0.03em; }
+.forge-unit {
+    pointer-events: auto; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums;
+    padding: 8px 14px; border-radius: 999px; background: var(--glass); border: 1px solid var(--line);
+    backdrop-filter: blur(14px); white-space: nowrap;
+}
+.forge-hint {
+    margin-top: auto; align-self: center; font-size: 11px; color: var(--ink-3); letter-spacing: 0.03em;
+    padding: 8px 14px; border-radius: 999px; background: rgba(0,0,0,0.25); border: 1px solid var(--line);
+    backdrop-filter: blur(14px); text-align: center;
+}
+.forge-tooltip {
+    pointer-events: none; position: absolute; z-index: 3; max-width: 240px;
+    padding: 12px 14px; border-radius: 14px; font-size: 12.5px; line-height: 1.5;
+    background: rgba(14,14,18,0.9); border: 1px solid var(--line-2); box-shadow: var(--shadow);
+    backdrop-filter: blur(20px); transition: opacity .18s;
+}
+.forge-tooltip .ft-name { font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; }
+.forge-tooltip .ft-group { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-3); margin-top: 2px; }
+.forge-tooltip .ft-val { font-size: 18px; font-weight: 500; letter-spacing: -0.02em; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.forge-tooltip .ft-blocks { color: var(--ink-3); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 560px) {
+    .forge-hint { font-size: 10px; }
+    .forge-labels .fgroup { font-size: 8.5px; letter-spacing: 0.12em; }
+}
+
 /* ---------- Modal ---------- */
 .modal-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); transition: opacity .3s; }
 .modal-backdrop.hidden { opacity: 0; pointer-events: none; }
@@ -345,8 +403,9 @@ body {
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
-    .card-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+    .card-grid { grid-template-columns: repeat(3, 1fr); grid-template-rows: none; grid-auto-rows: 1fr; }
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .forge-labels .flabel { font-size: 10px; }
 }
 @media (max-width: 560px) {
     body { letter-spacing: 0; }

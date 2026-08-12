@@ -92,6 +92,19 @@
                     </div>
                     <div class="card-foot">Multi-agent advisor<span class="card-arrow">→</span></div>
                 </button>
+
+                <!-- 05 FORGE (3D) -->
+                <button class="card" data-target="view-forge" id="block-forge">
+                    <div class="card-top">
+                        <span class="card-index">05</span>
+                        <span class="card-kicker">Spatial</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-label">The Forge</div>
+                        <div class="card-value card-value--sm">Your money as 3D Tetris</div>
+                    </div>
+                    <div class="card-foot">Live block graph<span class="card-arrow">→</span></div>
+                </button>
             </div>
         </main>
 
@@ -176,6 +189,22 @@
                     </form>
                 </div>
             </section>
+            <!-- FORGE · 3D TETRIS -->
+            <section class="detail-view view-forge" id="view-forge">
+                <div id="forge-canvas" class="canvas-container"></div>
+                <div id="forge-labels" class="forge-labels" aria-hidden="true"></div>
+                <div class="forge-overlay">
+                    <div class="forge-head">
+                        <div>
+                            <div class="eyebrow">Spatial ledger</div>
+                            <h2>The Forge</h2>
+                        </div>
+                        <div class="forge-unit" id="forge-unit">1 block = —</div>
+                    </div>
+                    <div class="forge-hint" id="forge-hint">Drag to orbit · scroll / pinch to zoom · hover a stack for detail</div>
+                    <div class="forge-tooltip hidden" id="forge-tooltip"></div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -190,5 +219,6 @@
     </div>
 
     <script src="app.js"></script>
+    <script src="tetris.js"></script>
 </body>
 </html>
