@@ -1,9 +1,9 @@
-// Backend URL: ?api=<url> query param (persisted) > saved value > localhost.
-// Set it once on the deployed site via ?api=https://your-cloudflared-url
+// Backend URL: same origin by default (FastAPI serves this SPA, on Vercel and
+// locally). Override with ?api=<url> (persisted) to point at a separate backend.
 const API_BASE = (() => {
     const q = new URLSearchParams(location.search).get('api');
     if (q) localStorage.setItem('API_BASE', q.replace(/\/$/, ''));
-    return localStorage.getItem('API_BASE') || 'http://localhost:8000';
+    return localStorage.getItem('API_BASE') || '';
 })();
 
 const formatINR = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);

@@ -5,6 +5,9 @@ transformers directly. If the Kaggle GPU dies at 3 AM, repoint LLM in one place.
 
 Backends
 --------
+GroqBackend         : hosted Groq API (OpenAI-compatible). No GPU -- the default
+                      for cloud/serverless deploys (e.g. Vercel). Uses native JSON
+                      function-calling, so it skips the Gemma wire-format regex.
 TransformersBackend : google/gemma-4-12B-it on a Kaggle/Colab GPU (4-bit default,
                       auto-fallback to fp16 sharded across all visible GPUs).
 EchoBackend         : no model; deterministic canned tool-calls for offline dev
@@ -36,6 +39,10 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 MODEL_ID = os.environ.get("GEMMA_MODEL", "google/gemma-4-12B-it")
+
+# Groq (hosted, OpenAI-compatible). Free-tier default; override with GROQ_MODEL.
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 # --- tool-call parsing -------------------------------------------------------
 
@@ -235,6 +242,64 @@ class TransformersBackend:
         return GenResult(text=prose, tool_calls=tool_calls)
 
 
+class GroqBackend:
+    """Gemma/Llama-class model via Groq's hosted OpenAI-compatible API.
+
+    No GPU, no model download -- one HTTPS call per generation. This is the
+    default for cloud/serverless deploys. Groq returns native JSON tool_calls, so
+    we parse those directly instead of the Gemma <|tool_call> wire format.
+    """
+
+    def __init__(self, model_id: str = GROQ_MODEL, api_key: str | None = None):
+        self.model_id = model_id
+        self.api_key = api_key or os.environ.get("GROQ_API_KEY")
+        if not self.api_key:
+            raise RuntimeError("GROQ_API_KEY is not set; cannot use the Groq backend.")
+        self.load_mode = "api"
+
+    def generate(self, messages: list[dict], tools: list[dict] | None = None,
+                 image=None, max_new_tokens: int = 512,
+                 enable_thinking: bool = False) -> GenResult:
+        import httpx
+
+        # Groq wants plain-string content; our messages already are (image path unused).
+        body: dict = {
+            "model": self.model_id,
+            "messages": [{"role": m["role"], "content": _as_text(m["content"])} for m in messages],
+            "max_tokens": max_new_tokens,
+            "temperature": 0,
+        }
+        if tools:
+            body["tools"] = tools
+            body["tool_choice"] = "auto"
+
+        r = httpx.post(GROQ_URL, json=body, timeout=60,
+                       headers={"Authorization": f"Bearer {self.api_key}"})
+        r.raise_for_status()
+        msg = r.json()["choices"][0]["message"]
+
+        calls = []
+        for tc in msg.get("tool_calls") or []:
+            fn = tc.get("function", {})
+            args = fn.get("arguments") or "{}"
+            if isinstance(args, str):
+                import json
+                try:
+                    args = json.loads(args)
+                except json.JSONDecodeError:
+                    args = {}
+            calls.append({"name": fn.get("name"), "arguments": args})
+
+        return GenResult(text=scrub(msg.get("content") or ""), tool_calls=calls)
+
+
+def _as_text(content) -> str:
+    """Flatten a possibly-multimodal message content to plain text for Groq."""
+    if isinstance(content, list):
+        return " ".join(p.get("text", "") for p in content if isinstance(p, dict))
+    return content or ""
+
+
 class EchoBackend:
     """CPU-only stand-in. A rule function decides the canned response so the
     orchestrator/agents can be built and tested with zero GPU."""
@@ -255,11 +320,19 @@ class EchoBackend:
 
 
 def make_backend(kind: str = "auto"):
-    """kind: 'transformers' | 'echo' | 'auto' (transformers if a GPU is visible)."""
+    """kind: 'groq' | 'transformers' | 'echo' | 'auto'.
+
+    auto: Groq if GROQ_API_KEY is set (cloud default), else transformers if a GPU
+    is visible (Kaggle), else the echo stub.
+    """
+    if kind == "groq":
+        return GroqBackend()
     if kind == "echo":
         return EchoBackend()
     if kind == "transformers":
         return TransformersBackend()
+    if os.environ.get("GROQ_API_KEY"):
+        return GroqBackend()
     try:
         import torch
         if torch.cuda.is_available():
