@@ -388,6 +388,7 @@ body {
 
 /* the modular grid — hairline cell borders read as Swiss rule lines; reflows, never overlaps */
 .agents-grid {
+    position: relative;
     flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
     display: grid; grid-template-columns: repeat(4, 1fr);
     border-top: 1px solid var(--line); border-left: 1px solid var(--line);
@@ -395,6 +396,12 @@ body {
 }
 .agents-grid::-webkit-scrollbar { width: 7px; }
 .agents-grid::-webkit-scrollbar-thumb { background: var(--line-2); }
+
+/* interconnect layer — orthogonal wires routed through the grid gutters */
+.agents-wire { position: absolute; left: 0; top: 0; width: 100%; z-index: 5; overflow: visible; pointer-events: none; }
+.agents-wire .seg { fill: none; stroke: rgba(255,255,255,0.32); stroke-width: 1.25; stroke-linejoin: round; stroke-linecap: round; }
+.agents-wire .wire-thread { fill: none; stroke: none; }
+.agents-wire .wire-pulse { fill: #fff; filter: drop-shadow(0 0 4px rgba(255,255,255,0.9)); opacity: 0; }
 
 .acell {
     background: var(--bg); padding: clamp(14px, 1.4vw, 20px);
