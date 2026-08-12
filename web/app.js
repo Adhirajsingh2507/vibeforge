@@ -1,6 +1,16 @@
-const API_BASE = 'http://localhost:8000';
+// Backend URL: ?api=<url> query param (persisted) > saved value > localhost.
+// Set it once on the deployed site via ?api=https://your-cloudflared-url
+const API_BASE = (() => {
+    const q = new URLSearchParams(location.search).get('api');
+    if (q) localStorage.setItem('API_BASE', q.replace(/\/$/, ''));
+    return localStorage.getItem('API_BASE') || 'http://localhost:8000';
+})();
 
 const formatINR = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+
+// Escape user-controlled text before it lands in innerHTML (merchant/category/etc).
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 let state = {
     dashboard: null,
@@ -115,9 +125,10 @@ els.btnBack.addEventListener('click', () => {
 
 // --- API ---
 async function api(endpoint, options = {}) {
+    const { silent, ...fetchOpts } = options;
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
-            ...options,
+            ...fetchOpts,
             headers: { 'Content-Type': 'application/json', ...options.headers }
         });
         const data = await res.json();
@@ -127,14 +138,14 @@ async function api(endpoint, options = {}) {
         }
         return data;
     } catch (e) {
-        alert(e.message);
+        if (!silent) alert(e.message);  // background calls (health/initial load) stay quiet
         throw e;
     }
 }
 
 async function checkHealth() {
     try {
-        await api('/health');
+        await api('/health', { silent: true });
         els.sysStatus.innerText = "SYS.ONLINE";
         els.sysStatus.style.color = "var(--accent)";
     } catch {
@@ -145,8 +156,8 @@ async function checkHealth() {
 
 async function loadData() {
     try {
-        state.dashboard = await api('/dashboard');
-        const fd = await api('/financial-data');
+        state.dashboard = await api('/dashboard', { silent: true });
+        const fd = await api('/financial-data', { silent: true });
         state.transactions = fd.transactions || [];
         render();
     } catch (e) {
@@ -180,7 +191,7 @@ function render() {
         return `
         <tr>
             <td class="mono" style="color: rgba(255,255,255,0.4); width: 120px">${t.date}</td>
-            <td>${t.merchant}<br><span class="label">${t.category}</span></td>
+            <td>${esc(t.merchant)}<br><span class="label">${esc(t.category)}</span></td>
             <td class="mono ${colorClass}" style="text-align:right">${formatINR(t.amount)}</td>
             <td class="actions" style="width: 100px">
                 <button class="table-btn" onclick="openModal('transaction', '${t.id}')">✎</button>
@@ -192,7 +203,7 @@ function render() {
     // INVESTMENTS DETAIL
     els.tableInv.innerHTML = investments.holdings.map(inv => `
         <tr>
-            <td>${inv.instrument}<br><span class="label badge-${inv.liquid ? 'liquid' : 'locked'}">${inv.liquid ? 'LIQUID' : 'LOCKED'}</span></td>
+            <td>${esc(inv.instrument)}<br><span class="label badge-${inv.liquid ? 'liquid' : 'locked'}">${inv.liquid ? 'LIQUID' : 'LOCKED'}</span></td>
             <td class="mono glow-green">${formatINR(inv.value)}</td>
             <td class="actions" style="width: 100px">
                 <button class="table-btn" onclick="openModal('investment', '${inv.id}')">✎</button>
@@ -205,7 +216,7 @@ function render() {
     // BILLS DETAIL
     els.tableBills.innerHTML = bills.upcoming_bills.map(b => `
         <tr>
-            <td>${b.name}<br><span class="label badge-bill">DUE: ${b.due_date} ${b.autopay ? '(AUTO)' : ''}</span></td>
+            <td>${esc(b.name)}<br><span class="label badge-bill">DUE: ${b.due_date} ${b.autopay ? '(AUTO)' : ''}</span></td>
             <td class="mono glow-red">${formatINR(b.amount)}</td>
             <td class="actions" style="width: 100px">
                 <button class="table-btn" onclick="openModal('bill', '${b.id}')">✎</button>
@@ -295,12 +306,12 @@ window.openModal = (type, id = null) => {
         els.modalTitle.innerText = "EDIT PROFILE";
         const p = state.dashboard.profile;
         html = `
-            <label>Name</label><input type="text" id="m-name" value="${p.name}" required>
+            <label>Name</label><input type="text" id="m-name" value="${esc(p.name)}" required>
             <label>Monthly Income</label><input type="number" id="m-inc" value="${p.monthly_income}" required>
             <label>Savings Balance</label><input type="number" id="m-sav" value="${p.savings_balance}" required>
             <label>Emergency Fund</label><input type="number" id="m-em" value="${p.emergency_fund}" required>
             <label>Credit Score</label><input type="number" id="m-cibil" value="${p.credit_score}" required min="300" max="900">
-            <label>Currency</label><input type="text" id="m-cur" value="${p.currency}" required>
+            <label>Currency</label><input type="text" id="m-cur" value="${esc(p.currency)}" required>
             <div class="form-actions"><button type="submit">SAVE PROFILE</button></div>
         `;
         modalSubmit = async () => {
@@ -322,8 +333,8 @@ window.openModal = (type, id = null) => {
         html = `
             <label>Date</label><input type="date" id="m-date" value="${t.date}" required>
             <label>Amount</label><input type="number" id="m-amt" value="${t.amount}" required min="1">
-            <label>Merchant</label><input type="text" id="m-merch" value="${t.merchant}" required maxlength="80">
-            <label>Category</label><input type="text" id="m-cat" value="${t.category}" required maxlength="40">
+            <label>Merchant</label><input type="text" id="m-merch" value="${esc(t.merchant)}" required maxlength="80">
+            <label>Category</label><input type="text" id="m-cat" value="${esc(t.category)}" required maxlength="40">
             <div class="form-actions"><button type="submit">SAVE TRANSACTION</button></div>
         `;
         modalSubmit = async () => {
@@ -341,7 +352,7 @@ window.openModal = (type, id = null) => {
         els.modalTitle.innerText = id ? "EDIT ASSET" : "NEW ASSET";
         const v = id ? state.dashboard.investments.holdings.find(x => x.id === id) : { instrument: '', value: '', monthly_contribution: '', liquid: true };
         html = `
-            <label>Instrument Name</label><input type="text" id="m-inst" value="${v.instrument}" required maxlength="80">
+            <label>Instrument Name</label><input type="text" id="m-inst" value="${esc(v.instrument)}" required maxlength="80">
             <label>Current Value</label><input type="number" id="m-val" value="${v.value}" required min="0">
             <label>Monthly Contribution</label><input type="number" id="m-sip" value="${v.monthly_contribution}" required min="0">
             <div class="checkbox-row mt-8"><input type="checkbox" id="m-liq" ${v.liquid ? 'checked' : ''}><label>Liquid Asset</label></div>
@@ -362,7 +373,7 @@ window.openModal = (type, id = null) => {
         els.modalTitle.innerText = id ? "EDIT BILL" : "NEW BILL";
         const b = id ? state.dashboard.bills.upcoming_bills.find(x => x.id === id) : { name: '', amount: '', due_date: new Date().toISOString().split('T')[0], autopay: false };
         html = `
-            <label>Bill Name</label><input type="text" id="m-name" value="${b.name}" required maxlength="80">
+            <label>Bill Name</label><input type="text" id="m-name" value="${esc(b.name)}" required maxlength="80">
             <label>Amount</label><input type="number" id="m-amt" value="${b.amount}" required min="1">
             <label>Due Date</label><input type="date" id="m-date" value="${b.due_date}" required>
             <div class="checkbox-row mt-8"><input type="checkbox" id="m-auto" ${b.autopay ? 'checked' : ''}><label>Autopay</label></div>
