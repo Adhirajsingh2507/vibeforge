@@ -2,180 +2,191 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibeforge | Swiss</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Vibeforge</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-    
-    <!-- HEADER -->
-    <header class="app-header">
-        <div class="brand">VIBEFORGE <span class="tag">CFO</span></div>
-        <div class="actions">
-            <span class="status" id="sys-status">SYS.ONLINE</span>
-            <button id="btn-reset">RESET</button>
-        </div>
-    </header>
+    <!-- ambient depth layer -->
+    <div class="ambient" aria-hidden="true"></div>
 
-    <!-- BACK BUTTON (Hidden by default) -->
-    <button id="btn-back" class="btn-back">← BACK TO GRID</button>
-
-    <!-- MAIN GRID (Home View) -->
-    <main id="home-view" class="swiss-grid">
-        
-        <!-- BLOCK: BUDGET -->
-        <div class="grid-block" data-target="view-budget" id="block-budget">
-            <div class="block-number">01</div>
-            <div class="block-title">BUDGET &<br>NET WORTH</div>
-            <div class="block-preview" id="preview-net-worth">₹0</div>
-        </div>
-
-        <!-- BLOCK: INVESTMENTS -->
-        <div class="grid-block" data-target="view-investments" id="block-investments">
-            <div class="block-number">02</div>
-            <div class="block-title">PORTFOLIO<br>INVESTMENTS</div>
-            <div class="block-preview" id="preview-investments">₹0</div>
-        </div>
-
-        <!-- BLOCK: BILLS -->
-        <div class="grid-block" data-target="view-bills" id="block-bills">
-            <div class="block-number">03</div>
-            <div class="block-title">UPCOMING<br>BILLS</div>
-            <div class="block-preview" id="preview-bills">₹0</div>
-        </div>
-
-        <!-- BLOCK: AI ORCHESTRATOR -->
-        <div class="grid-block block-dark" data-target="view-chat" id="block-chat">
-            <div class="block-number">04</div>
-            <div class="block-title">AI ORCHESTRATOR<br>QUERY SYSTEM</div>
-            <div class="block-preview">>_ STANDBY</div>
-        </div>
-
-    </main>
-
-    <!-- DETAIL VIEWS (Hidden by default) -->
-    <div id="detail-container" class="detail-container">
-        
-        <!-- DETAIL: BUDGET -->
-        <div class="detail-view" id="view-budget">
-            <div class="detail-header">
-                <h1>NET WORTH</h1>
-                <button class="btn" onclick="openModal('profile')">EDIT PROFILE</button>
+    <!-- APP SHELL -->
+    <div class="app">
+        <!-- HEADER -->
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark"></span>
+                <span class="brand-name">Vibeforge</span>
+                <span class="brand-sub">Personal CFO</span>
             </div>
-            <div class="massive-number" id="detail-net-worth">₹0</div>
-            
-            <div class="data-grid">
-                <div class="data-cell">
-                    <label>MONTHLY INCOME</label>
-                    <div class="val" id="detail-income">₹0</div>
+            <div class="topbar-actions">
+                <button id="btn-back" class="ghost-btn back-btn" aria-label="Back">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 6l-6 6 6 6"/></svg>
+                    <span>Home</span>
+                </button>
+                <span class="status" id="sys-status"><span class="status-dot"></span>Connecting</span>
+                <button id="btn-reset" class="ghost-btn">Reset</button>
+            </div>
+        </header>
+
+        <!-- HOME · CARD GRID -->
+        <main id="home-view" class="home">
+            <div class="home-lede">
+                <h1>Good day, Robin.</h1>
+                <p>Your financial system, orchestrated by AI.</p>
+            </div>
+
+            <div class="card-grid">
+                <!-- 01 BUDGET -->
+                <button class="card" data-target="view-budget" id="block-budget">
+                    <div class="card-top">
+                        <span class="card-index">01</span>
+                        <span class="card-kicker">Overview</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-label">Net worth</div>
+                        <div class="card-value" id="preview-net-worth">—</div>
+                    </div>
+                    <div class="card-foot">Budget &amp; cashflow<span class="card-arrow">→</span></div>
+                </button>
+
+                <!-- 02 INVESTMENTS -->
+                <button class="card" data-target="view-investments" id="block-investments">
+                    <div class="card-top">
+                        <span class="card-index">02</span>
+                        <span class="card-kicker">Assets</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-label">Portfolio</div>
+                        <div class="card-value" id="preview-investments">—</div>
+                    </div>
+                    <div class="card-foot">Holdings &amp; SIP<span class="card-arrow">→</span></div>
+                </button>
+
+                <!-- 03 BILLS -->
+                <button class="card" data-target="view-bills" id="block-bills">
+                    <div class="card-top">
+                        <span class="card-index">03</span>
+                        <span class="card-kicker">Upcoming</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-label">Bills due</div>
+                        <div class="card-value" id="preview-bills">—</div>
+                    </div>
+                    <div class="card-foot">Next billing cycle<span class="card-arrow">→</span></div>
+                </button>
+
+                <!-- 04 AI ORCHESTRATOR (hero) -->
+                <button class="card card--ai" data-target="view-chat" id="block-chat">
+                    <div class="ai-orb" aria-hidden="true"><span></span><span></span><span></span></div>
+                    <div class="card-top">
+                        <span class="card-index">04</span>
+                        <span class="card-kicker">Intelligence</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-label">AI Orchestrator</div>
+                        <div class="card-value card-value--sm">Ask anything about your money</div>
+                    </div>
+                    <div class="card-foot">Multi-agent advisor<span class="card-arrow">→</span></div>
+                </button>
+            </div>
+        </main>
+
+        <!-- DETAIL VIEWS -->
+        <div id="detail-container" class="detail-container">
+
+            <!-- BUDGET -->
+            <section class="detail-view" id="view-budget">
+                <div class="detail-inner">
+                    <div class="detail-head">
+                        <div>
+                            <div class="eyebrow">Overview</div>
+                            <h2>Net worth</h2>
+                        </div>
+                        <button class="pill-btn" onclick="openModal('profile')">Edit profile</button>
+                    </div>
+                    <div class="hero-number" id="detail-net-worth">—</div>
+
+                    <div class="stat-grid">
+                        <div class="stat"><label>Monthly income</label><div class="stat-val" id="detail-income">—</div></div>
+                        <div class="stat"><label>Expenses</label><div class="stat-val" id="detail-expenses">—</div></div>
+                        <div class="stat"><label>Disposable</label><div class="stat-val" id="detail-disposable">—</div></div>
+                        <div class="stat stat--hi"><label>Savings rate</label><div class="stat-val" id="detail-savings-rate">—</div></div>
+                    </div>
+
+                    <div class="detail-head detail-head--sub">
+                        <h3>Transaction ledger</h3>
+                        <button class="pill-btn" onclick="openModal('transaction')">+ New</button>
+                    </div>
+                    <div class="table-wrap"><table class="data-table" id="table-transactions"></table></div>
                 </div>
-                <div class="data-cell">
-                    <label>EXPENSES</label>
-                    <div class="val" id="detail-expenses">₹0</div>
-                </div>
-                <div class="data-cell">
-                    <label>DISPOSABLE</label>
-                    <div class="val" id="detail-disposable">₹0</div>
-                </div>
-                <div class="data-cell bg-accent">
-                    <label>SAVINGS RATE</label>
-                    <div class="val" id="detail-savings-rate">0%</div>
-                </div>
-            </div>
+            </section>
 
-            <div class="detail-header mt-large">
-                <h1>TRANSACTION LEDGER</h1>
-                <button class="btn" onclick="openModal('transaction')">+ NEW TXN</button>
-            </div>
-            <div class="list-wrapper">
-                <table class="swiss-table" id="table-transactions">
-                    <!-- Populated by JS -->
-                </table>
-            </div>
+            <!-- INVESTMENTS -->
+            <section class="detail-view" id="view-investments">
+                <div class="detail-inner">
+                    <div class="detail-head">
+                        <div><div class="eyebrow">Assets</div><h2>Portfolio</h2></div>
+                        <button class="pill-btn" onclick="openModal('investment')">+ Add asset</button>
+                    </div>
+                    <div class="table-wrap mt"><table class="data-table" id="table-investments"></table></div>
+                    <div class="total-bar"><label>Total assets</label><div class="stat-val" id="detail-total-invested">—</div></div>
+                </div>
+            </section>
+
+            <!-- BILLS -->
+            <section class="detail-view" id="view-bills">
+                <div class="detail-inner">
+                    <div class="detail-head">
+                        <div><div class="eyebrow">Upcoming</div><h2>Bills</h2></div>
+                        <button class="pill-btn" onclick="openModal('bill')">+ Add bill</button>
+                    </div>
+                    <div class="table-wrap mt"><table class="data-table" id="table-bills"></table></div>
+                    <div class="total-bar"><label>Total upcoming</label><div class="stat-val" id="detail-total-bills">—</div></div>
+                </div>
+            </section>
+
+            <!-- CHAT · AI -->
+            <section class="detail-view view-chat" id="view-chat">
+                <div id="canvas-container" class="canvas-container"></div>
+
+                <div class="chat-overlay">
+                    <div class="ai-state" id="ai-state"><span class="ai-state-dot"></span><span id="ai-state-label">Idle</span></div>
+
+                    <div class="greeting-text" id="greeting">
+                        <div class="greeting-sub">Hello, Robin</div>
+                        <div class="greeting-main">How can I help<br>with your finances?</div>
+                    </div>
+
+                    <div id="chat-display" class="chat-display"></div>
+
+                    <div id="trace-panel" class="trace-panel hidden">
+                        <div class="trace-title">Agents consulted</div>
+                        <div id="trace-logs" class="trace-logs"></div>
+                    </div>
+
+                    <form id="form-chat" class="composer">
+                        <input type="text" id="chat-input" placeholder="Ask about affordability, loans, fraud…" autocomplete="off" required>
+                        <button type="submit" id="btn-send" aria-label="Send">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19V5m-6 6l6-6 6 6"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </section>
         </div>
-
-        <!-- DETAIL: INVESTMENTS -->
-        <div class="detail-view" id="view-investments">
-            <div class="detail-header">
-                <h1>INVESTMENTS</h1>
-                <button class="btn" onclick="openModal('investment')">+ ADD ASSET</button>
-            </div>
-            <div class="list-wrapper mt-large">
-                <table class="swiss-table" id="table-investments">
-                    <!-- Populated by JS -->
-                </table>
-            </div>
-            <div class="total-row mt-large">
-                <label>TOTAL ASSETS</label>
-                <div class="val" id="detail-total-invested">₹0</div>
-            </div>
-        </div>
-
-        <!-- DETAIL: BILLS -->
-        <div class="detail-view" id="view-bills">
-            <div class="detail-header">
-                <h1>UPCOMING BILLS</h1>
-                <button class="btn" onclick="openModal('bill')">+ ADD BILL</button>
-            </div>
-            <div class="list-wrapper mt-large">
-                <table class="swiss-table" id="table-bills">
-                    <!-- Populated by JS -->
-                </table>
-            </div>
-            <div class="total-row mt-large">
-                <label>TOTAL UPCOMING</label>
-                <div class="val" id="detail-total-bills">₹0</div>
-            </div>
-        </div>
-
-        <!-- DETAIL: CHAT -->
-        <div class="detail-view chat-ethereal" id="view-chat">
-            
-            <!-- Three.js Canvas Container -->
-            <div id="canvas-container"></div>
-            
-            <!-- Ethereal Greeting & Chat UI -->
-            <div class="chat-overlay">
-                <div class="greeting-text">
-                    <div class="sub">Hello, Robin</div>
-                    <div class="main">How can I help<br>you today?</div>
-                </div>
-
-                <div id="chat-display" class="chat-display">
-                    <!-- Chat bubbles injected here -->
-                </div>
-                
-                <div id="trace-panel" class="trace-panel hidden">
-                    <div id="trace-logs" class="trace-logs"></div>
-                </div>
-
-                <form id="form-chat" class="glass-pill-form">
-                    <input type="text" id="chat-input" placeholder="Ask anything..." autocomplete="off" required>
-                    <button type="submit" id="btn-send">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 4v16m-4-4l4 4 4-4" />
-                        </svg>
-                    </button>
-                </form>
-            </div>
-        </div>
-
     </div>
 
-    <!-- MODAL OVERLAY -->
+    <!-- MODAL -->
     <div id="modal-backdrop" class="modal-backdrop hidden"></div>
-    <div id="modal-container" class="modal-container hidden">
+    <div id="modal-container" class="modal-container hidden" role="dialog" aria-modal="true">
         <div class="modal-header">
-            <h2 id="modal-title">EDIT</h2>
-            <button class="btn-close" onclick="closeModal()">✕</button>
+            <h2 id="modal-title">Edit</h2>
+            <button class="btn-close" onclick="closeModal()" aria-label="Close">✕</button>
         </div>
-        <div class="modal-body">
-            <form id="modal-form" class="swiss-form">
-                <!-- Injected via JS -->
-            </form>
-        </div>
+        <form id="modal-form" class="modal-form"></form>
     </div>
 
     <script src="app.js"></script>
