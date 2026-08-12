@@ -8,6 +8,7 @@ field detail, which the UI renders inline.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
