@@ -374,79 +374,74 @@ body {
     .forge-labels .fgroup { font-size: 8.5px; letter-spacing: 0.12em; }
 }
 
-/* ---------- Agents · reasoning theatre ---------- */
+/* ---------- Agent Theatre · Swiss reasoning grid ---------- */
 .view-agents {
     display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
-    padding: clamp(64px, 8vh, 100px) clamp(18px, 4vw, 56px) clamp(20px, 3vh, 34px);
+    padding: clamp(58px, 7vh, 92px) clamp(18px, 4vw, 56px) clamp(18px, 3vh, 30px);
 }
-.agents-head { text-align: center; max-width: 640px; margin: 0 auto; flex: 0 0 auto; }
-.agents-head h2 { font-size: clamp(24px, 3.4vw, 40px); font-weight: 500; letter-spacing: -0.03em; margin-top: 6px; }
-.agents-sub { margin: 12px auto 0; color: var(--ink-3); font-size: clamp(12px, 1.4vw, 14px); line-height: 1.55; max-width: 520px; }
-
-.agents-stage { position: relative; flex: 1 1 auto; min-height: 0; margin: clamp(10px, 2vh, 24px) 0; }
-.agents-edges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.agents-edges path { fill: none; stroke: rgba(255,255,255,0.22); stroke-width: 1.2; }
-.agents-edges .edge-pulse { fill: #fff; }
-.agents-nodes { position: absolute; inset: 0; }
-
-/* a node — dormant is a compact pill, active/done expands into a card */
-.anode {
-    position: absolute; transform: translate(-50%, -50%) scale(0.9);
-    width: max-content; max-width: 210px; opacity: 0;
-    padding: 10px 14px; border-radius: 14px; text-align: left;
-    background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(18px);
-    transition: opacity .5s var(--ease), transform .5s var(--ease), background .4s, border-color .4s, box-shadow .4s, padding .4s;
-    will-change: left, top, transform, opacity;
+.agents-titlebar {
+    flex: 0 0 auto; display: flex; align-items: baseline; justify-content: space-between; gap: 20px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--line-2);
 }
-.anode.show { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
-.anode.queued { opacity: 0.8; border-color: var(--line-2); }
-.anode.thinking { opacity: 1; border-color: rgba(255,255,255,0.4); background: var(--glass-2);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 0 34px -6px rgba(255,255,255,0.35); }
-.anode.done { opacity: 1; border-color: var(--line-2); background: var(--glass-2); }
-.anode--core { border-radius: 18px; }
-.anode--core.thinking { box-shadow: 0 0 0 1px rgba(255,255,255,0.18), 0 0 50px -8px rgba(255,255,255,0.45); }
-.anode--judge.done { border-color: rgba(255,255,255,0.34); }
+.agents-title { font-size: clamp(40px, 8vw, 92px); font-weight: 700; letter-spacing: -0.045em; line-height: 0.92; }
+.agents-progress { font-size: clamp(13px, 1.4vw, 16px); color: var(--ink-3); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; white-space: nowrap; }
 
-.anode-label { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
-.anode--core .anode-label { font-size: 15px; }
-.anode-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-4); flex: 0 0 auto; transition: background .4s, box-shadow .4s; }
-.anode.thinking .anode-dot { background: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.9); animation: statePulse 1.3s var(--ease-in) infinite; }
-.anode.done .anode-dot { background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
-.anode-role { font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.02em; margin-top: 4px; }
-.anode-summary {
-    font-size: 11.5px; line-height: 1.5; color: var(--ink-2); margin-top: 0; max-height: 0; opacity: 0;
-    overflow: hidden; transition: max-height .5s var(--ease), opacity .4s, margin-top .4s;
+/* the modular grid — hairline cell borders read as Swiss rule lines; reflows, never overlaps */
+.agents-grid {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--line); border-left: 1px solid var(--line);
+    margin: clamp(14px, 2.4vh, 26px) 0;
 }
-.anode.done .anode-summary, .anode.thinking.anode--core .anode-summary { max-height: 120px; opacity: 1; margin-top: 8px; }
-.anode--core .anode-thought { font-size: 12px; color: var(--ink-2); margin-top: 8px; line-height: 1.5; min-height: 18px; }
+.agents-grid::-webkit-scrollbar { width: 7px; }
+.agents-grid::-webkit-scrollbar-thumb { background: var(--line-2); }
 
-.agents-status {
-    flex: 0 0 auto; align-self: center; display: inline-flex; align-items: center; gap: 9px;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2);
-    padding: 8px 15px; border-radius: 999px; background: rgba(0,0,0,0.25);
-    border: 1px solid var(--line); backdrop-filter: blur(14px); margin-bottom: 12px;
+.acell {
+    background: var(--bg); padding: clamp(14px, 1.4vw, 20px);
+    border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+    transition: background .3s var(--ease), color .3s var(--ease);
 }
-.agents-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); box-shadow: 0 0 8px currentColor; }
-.agents-status.busy .agents-status-dot { background: #fff; color: #fff; animation: statePulse 1.4s var(--ease-in) infinite; }
+.acell--span { grid-column: 1 / -1; }
+.acell--core { min-height: 108px; }
 
-.agents-answer {
-    flex: 0 0 auto; width: min(680px, 100%); align-self: center; margin-bottom: 12px;
-    padding: 16px 18px; border-radius: 16px; font-size: 14px; line-height: 1.55; white-space: pre-wrap;
-    background: rgba(255,255,255,0.06); border: 1px solid var(--line); backdrop-filter: blur(18px);
-    animation: msgIn .5s var(--ease) both;
+.acell-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.acell-idx { font-size: 11px; color: var(--ink-4); font-variant-numeric: tabular-nums; letter-spacing: 0.08em; }
+.acell-state { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--ink-4); }
+.acell-name { font-size: clamp(15px, 1.5vw, 19px); font-weight: 600; letter-spacing: -0.02em; }
+.acell--span .acell-name { font-size: clamp(17px, 1.8vw, 22px); }
+.acell-role { font-size: 11px; color: var(--ink-3); letter-spacing: 0.01em; margin-top: 4px; }
+.acell-body {
+    font-size: 12px; line-height: 1.5; color: var(--ink-2); margin-top: 12px; min-width: 0;
+    overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3; overflow: hidden;
 }
-.agents-answer .aa-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--ink-3); margin-bottom: 8px; }
-.agents-answer .aa-verdict { display: inline-flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-.agents-answer .aa-chip { font-size: 10.5px; letter-spacing: 0.04em; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); }
+.acell--span .acell-body { -webkit-line-clamp: 6; }
+.acell-answer { white-space: pre-wrap; }
+.aa-verdict { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.aa-chip { font-size: 10px; letter-spacing: 0.04em; padding: 4px 10px; border: 1px solid var(--line-2); color: var(--ink-2); }
+
+/* states — text labels + inversion, no glowing dots */
+.acell.is-idle { opacity: 0.5; }
+.acell.is-queued { opacity: 0.85; }
+.acell.is-queued .acell-state { color: var(--ink-2); }
+.acell.is-running { opacity: 1; background: #fff; color: #0a0a0a; }           /* inverted = active (Swiss) */
+.acell.is-running .acell-idx, .acell.is-running .acell-state,
+.acell.is-running .acell-role, .acell.is-running .acell-body { color: rgba(10,10,10,0.7); }
+.acell.is-done { opacity: 1; box-shadow: inset 0 2px 0 0 #fff; }              /* filled top rule = complete */
+.acell.is-done .acell-state { color: var(--ink); }
+.acell.is-done .aa-chip { border-color: var(--line-2); }
 
 .agents-composer { flex: 0 0 auto; align-self: center; }
 
-@media (max-width: 700px) {
-    .agents-sub { display: none; }
-    .anode { max-width: 150px; padding: 8px 11px; }
-    .anode-label { font-size: 12px; }
-    .anode-summary { font-size: 10.5px; }
+@media (max-width: 900px) { .agents-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) {
+    .agents-grid { grid-template-columns: 1fr; }
+    .acell-body { -webkit-line-clamp: 4; }
 }
+
+/* topbar back button — arrow only */
+.ghost-btn.icon-only { padding: 9px; }
 
 /* ---------- Modal ---------- */
 .modal-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); transition: opacity .3s; }

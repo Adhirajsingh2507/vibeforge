@@ -23,11 +23,9 @@
                 <span class="brand-sub">Personal CFO</span>
             </div>
             <div class="topbar-actions">
-                <button id="btn-back" class="ghost-btn back-btn" aria-label="Back">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 6l-6 6 6 6"/></svg>
-                    <span>Home</span>
+                <button id="btn-back" class="ghost-btn back-btn icon-only" aria-label="Back to home">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 6l-6 6 6 6"/></svg>
                 </button>
-                <span class="status" id="sys-status"><span class="status-dot"></span>Connecting</span>
                 <button id="btn-reset" class="ghost-btn">Reset</button>
             </div>
         </header>
@@ -223,22 +221,14 @@
                     <div class="forge-tooltip hidden" id="forge-tooltip"></div>
                 </div>
             </section>
-            <!-- AGENTS · REASONING FLOW -->
+            <!-- AGENTS · SWISS REASONING GRID -->
             <section class="detail-view view-agents" id="view-agents">
-                <div class="agents-head">
-                    <div class="eyebrow">Multi-agent reasoning</div>
-                    <h2>Agent Theatre</h2>
-                    <p class="agents-sub">A live map of how your question moves from the orchestrator, through the specialists, past the judge, to a recommendation.</p>
+                <div class="agents-titlebar">
+                    <h1 class="agents-title">Agent Theatre</h1>
+                    <div class="agents-progress" id="agents-progress">00 / 00</div>
                 </div>
 
-                <div class="agents-stage" id="agents-stage">
-                    <svg class="agents-edges" id="agents-edges" aria-hidden="true"></svg>
-                    <div class="agents-nodes" id="agents-nodes"></div>
-                </div>
-
-                <div class="agents-status" id="agents-status"><span class="agents-status-dot"></span><span id="agents-status-label">Idle — ask something to begin</span></div>
-
-                <div class="agents-answer hidden" id="agents-answer"></div>
+                <div class="agents-grid" id="agents-grid"></div>
 
                 <form class="agents-composer composer" id="agents-form">
                     <input type="text" id="agents-input" placeholder="Ask the agents — e.g. Can I afford a ₹90,000 iPhone next month?" autocomplete="off" required>

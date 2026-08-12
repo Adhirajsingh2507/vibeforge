@@ -5,3 +5,7 @@ venv/
 .env
 .vercel
 .env*
+
+# local Claude settings (may contain secrets)
+.claude/settings.local.json
+.claude/*.tmp.*

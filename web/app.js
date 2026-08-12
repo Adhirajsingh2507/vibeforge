@@ -105,6 +105,7 @@ async function api(endpoint, options = {}) {
 }
 
 async function checkHealth() {
+    if (!els.sysStatus) return; // status indicator removed from the topbar
     try {
         await api('/health', { silent: true });
         els.sysStatus.classList.add('online'); els.sysStatus.classList.remove('offline');
