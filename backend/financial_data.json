@@ -1,0 +1,142 @@
+{
+  "profile": {
+    "name": "Adhiraj",
+    "monthly_income": 60000,
+    "savings_balance": 180000,
+    "emergency_fund": 75000,
+    "credit_score": 762,
+    "currency": "INR"
+  },
+  "transactions": [
+    {
+      "id": "d187c5a8",
+      "date": "2026-07-01",
+      "merchant": "Rent - Landlord",
+      "category": "housing",
+      "amount": 15000
+    },
+    {
+      "id": "f56745ca",
+      "date": "2026-07-02",
+      "merchant": "BigBasket",
+      "category": "groceries",
+      "amount": 4200
+    },
+    {
+      "id": "23a2667e",
+      "date": "2026-07-03",
+      "merchant": "Swiggy",
+      "category": "restaurants",
+      "amount": 2400
+    },
+    {
+      "id": "c0a4a3f7",
+      "date": "2026-07-05",
+      "merchant": "HDFC Card EMI",
+      "category": "emi",
+      "amount": 8000
+    },
+    {
+      "id": "35e89e50",
+      "date": "2026-07-06",
+      "merchant": "CESC Electricity",
+      "category": "utilities",
+      "amount": 2500
+    },
+    {
+      "id": "b01602c7",
+      "date": "2026-07-08",
+      "merchant": "Zomato",
+      "category": "restaurants",
+      "amount": 2100
+    },
+    {
+      "id": "80070d62",
+      "date": "2026-07-10",
+      "merchant": "Uber",
+      "category": "transport",
+      "amount": 1500
+    },
+    {
+      "id": "c82d48f3",
+      "date": "2026-07-12",
+      "merchant": "Apollo Pharmacy",
+      "category": "healthcare",
+      "amount": 1200
+    },
+    {
+      "id": "598ca364",
+      "date": "2026-07-15",
+      "merchant": "LIC Premium",
+      "category": "insurance",
+      "amount": 4500
+    },
+    {
+      "id": "30e84d40",
+      "date": "2026-07-19",
+      "merchant": "Swiggy",
+      "category": "restaurants",
+      "amount": 1800
+    },
+    {
+      "id": "b9bac96d",
+      "date": "2026-07-20",
+      "merchant": "Netflix + Spotify",
+      "category": "subscriptions",
+      "amount": 850
+    }
+  ],
+  "bills": [
+    {
+      "id": "e2241acb",
+      "name": "Rent",
+      "due_date": "2026-08-01",
+      "amount": 15000,
+      "autopay": false
+    },
+    {
+      "id": "fbf4537e",
+      "name": "HDFC Card EMI",
+      "due_date": "2026-08-05",
+      "amount": 8000,
+      "autopay": true
+    },
+    {
+      "id": "abb0eeac",
+      "name": "Electricity",
+      "due_date": "2026-08-06",
+      "amount": 2500,
+      "autopay": false
+    },
+    {
+      "id": "675715a5",
+      "name": "LIC Premium",
+      "due_date": "2026-08-15",
+      "amount": 4500,
+      "autopay": true
+    }
+  ],
+  "investments": [
+    {
+      "id": "2d6dbfeb",
+      "instrument": "Mutual Funds (SIP)",
+      "value": 230000,
+      "monthly_contribution": 10000,
+      "liquid": true
+    },
+    {
+      "id": "6227890a",
+      "instrument": "Direct Stocks",
+      "value": 110000,
+      "monthly_contribution": 0,
+      "liquid": true
+    },
+    {
+      "id": "8a3009d7",
+      "instrument": "PPF",
+      "value": 145000,
+      "monthly_contribution": 0,
+      "liquid": false
+    }
+  ]
+}
