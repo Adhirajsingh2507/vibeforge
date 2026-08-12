@@ -31,10 +31,11 @@ _URLISH = re.compile(r"[\w-]+\.(?:xyz|top|click|buzz|com|in|net|org|io|co)\b|@\w
 # FAST_DATA: a plain lookup of a single stored quantity.
 _FAST = [
     (re.compile(r"\b(cibil|credit score)\b", re.I), "cibil"),
+    # disposable must precede income: "disposable income" also matches income
+    (re.compile(r"\bdisposable\b", re.I), "disposable"),
     (re.compile(r"\b(monthly )?income\b", re.I), "income"),
     (re.compile(r"\b(savings|balance)\b", re.I), "savings"),
     (re.compile(r"\b(expenses?|spend(ing)?)\b", re.I), "expenses"),
-    (re.compile(r"\bdisposable\b", re.I), "disposable"),
     (re.compile(r"\b(bills?|due)\b", re.I), "bills"),
     (re.compile(r"\b(invest(ed|ments?)?|sip|portfolio)\b", re.I), "investments"),
     (re.compile(r"\bemergency fund\b", re.I), "emergency"),
