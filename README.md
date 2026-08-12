@@ -45,6 +45,32 @@ Then open http://localhost:8000/health — you should get `{"status":"ok",...}`.
 3. Start with `GET /dashboard` (the whole financial picture) and `POST /advise`
    (send a question, render `answer` + the agent `trace`).
 
+## Deploy (Vercel + CI/CD)
+
+The whole app — FastAPI backend **and** the `web/` SPA — deploys as one Vercel
+Python function (`api/index.py`, routed by `vercel.json`). Frontend and API share
+one origin, so no CORS and no separate URL. The LLM is the hosted **Groq** API,
+so there's no GPU: set `GROQ_API_KEY` and it runs anywhere.
+
+**One-time setup**
+
+1. Create the Vercel project (first deploy): `vercel --prod` from the repo root,
+   or link an existing one with `vercel link`. This writes `.vercel/project.json`.
+2. In the Vercel project env, add **`GROQ_API_KEY`** (and optionally `GROQ_MODEL`,
+   default `llama-3.3-70b-versatile`) for Production and Preview.
+3. Add three GitHub repo secrets so CI can deploy: `VERCEL_TOKEN`,
+   `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (the last two are in `.vercel/project.json`).
+
+**Pipeline** (`.github/workflows/ci-cd.yml`)
+
+- Every push/PR → runs `selftest.py`, `pytest`, and a JS syntax check.
+- Pull request → **preview** deploy to Vercel.
+- Push/merge to `master` → **production** deploy (only if tests pass).
+
+State on Vercel is ephemeral (in-memory + `/tmp`): reads and a single chat session
+work; edits reset on cold start. Fine for the demo — wire an external store
+(Upstash/Vercel KV) if you need durable CRUD.
+
 ## What's the "backend" actually doing
 
 `POST /advise` → orchestrator asks the LLM which specialist agents to run →
