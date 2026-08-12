@@ -71,11 +71,13 @@ function openDetail(id) {
     currentView = view;
     if (id === 'view-chat') { AIViz && AIViz.resize(); AIViz && AIViz.setState('idle'); els.chatInput.focus(); }
     if (id === 'view-forge') window.ForgeViz && ForgeViz.open(state.dashboard);
+    if (id === 'view-agents') window.AgentFlow && AgentFlow.open();
 }
 function closeDetail() {
     if (!currentView) return;
     const view = currentView; currentView = null;
     if (view.id === 'view-forge') window.ForgeViz && ForgeViz.close();
+    if (view.id === 'view-agents') window.AgentFlow && AgentFlow.close();
     view.classList.remove('visible');
     els.btnBack.classList.remove('visible');
     els.home.classList.remove('dim');
@@ -221,6 +223,7 @@ els.chatForm.addEventListener('submit', async (e) => {
 
     try {
         const res = await api('/advise', { method: 'POST', body: JSON.stringify({ query, session_id: null }) });
+        window.__lastRun = { ...res, query }; // let the Agent Theatre replay this exact run
 
         // Build the answer: prefer the model's synthesis; drop the generic demo filler.
         let answer = res.answer || '';

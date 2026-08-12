@@ -106,7 +106,7 @@ body {
 .card-grid {
     flex: 1 1 auto; min-height: 0;
     display: grid; gap: clamp(12px, 1.5vw, 20px);
-    grid-template-columns: repeat(5, 1fr); grid-template-rows: 1fr;
+    grid-template-columns: repeat(3, 1fr); grid-template-rows: none; grid-auto-rows: 1fr;
 }
 /* AI hero spans two columns for hierarchy */
 .card--ai { grid-column: span 1; }
@@ -359,6 +359,80 @@ body {
 @media (max-width: 560px) {
     .forge-hint { font-size: 10px; }
     .forge-labels .fgroup { font-size: 8.5px; letter-spacing: 0.12em; }
+}
+
+/* ---------- Agents · reasoning theatre ---------- */
+.view-agents {
+    display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+    padding: clamp(64px, 8vh, 100px) clamp(18px, 4vw, 56px) clamp(20px, 3vh, 34px);
+}
+.agents-head { text-align: center; max-width: 640px; margin: 0 auto; flex: 0 0 auto; }
+.agents-head h2 { font-size: clamp(24px, 3.4vw, 40px); font-weight: 500; letter-spacing: -0.03em; margin-top: 6px; }
+.agents-sub { margin: 12px auto 0; color: var(--ink-3); font-size: clamp(12px, 1.4vw, 14px); line-height: 1.55; max-width: 520px; }
+
+.agents-stage { position: relative; flex: 1 1 auto; min-height: 0; margin: clamp(10px, 2vh, 24px) 0; }
+.agents-edges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.agents-edges path { fill: none; stroke: rgba(255,255,255,0.22); stroke-width: 1.2; }
+.agents-edges .edge-pulse { fill: #fff; }
+.agents-nodes { position: absolute; inset: 0; }
+
+/* a node — dormant is a compact pill, active/done expands into a card */
+.anode {
+    position: absolute; transform: translate(-50%, -50%) scale(0.9);
+    width: max-content; max-width: 210px; opacity: 0;
+    padding: 10px 14px; border-radius: 14px; text-align: left;
+    background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(18px);
+    transition: opacity .5s var(--ease), transform .5s var(--ease), background .4s, border-color .4s, box-shadow .4s, padding .4s;
+    will-change: left, top, transform, opacity;
+}
+.anode.show { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+.anode.queued { opacity: 0.8; border-color: var(--line-2); }
+.anode.thinking { opacity: 1; border-color: rgba(255,255,255,0.4); background: var(--glass-2);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 0 34px -6px rgba(255,255,255,0.35); }
+.anode.done { opacity: 1; border-color: var(--line-2); background: var(--glass-2); }
+.anode--core { border-radius: 18px; }
+.anode--core.thinking { box-shadow: 0 0 0 1px rgba(255,255,255,0.18), 0 0 50px -8px rgba(255,255,255,0.45); }
+.anode--judge.done { border-color: rgba(255,255,255,0.34); }
+
+.anode-label { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+.anode--core .anode-label { font-size: 15px; }
+.anode-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-4); flex: 0 0 auto; transition: background .4s, box-shadow .4s; }
+.anode.thinking .anode-dot { background: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.9); animation: statePulse 1.3s var(--ease-in) infinite; }
+.anode.done .anode-dot { background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+.anode-role { font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.02em; margin-top: 4px; }
+.anode-summary {
+    font-size: 11.5px; line-height: 1.5; color: var(--ink-2); margin-top: 0; max-height: 0; opacity: 0;
+    overflow: hidden; transition: max-height .5s var(--ease), opacity .4s, margin-top .4s;
+}
+.anode.done .anode-summary, .anode.thinking.anode--core .anode-summary { max-height: 120px; opacity: 1; margin-top: 8px; }
+.anode--core .anode-thought { font-size: 12px; color: var(--ink-2); margin-top: 8px; line-height: 1.5; min-height: 18px; }
+
+.agents-status {
+    flex: 0 0 auto; align-self: center; display: inline-flex; align-items: center; gap: 9px;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2);
+    padding: 8px 15px; border-radius: 999px; background: rgba(0,0,0,0.25);
+    border: 1px solid var(--line); backdrop-filter: blur(14px); margin-bottom: 12px;
+}
+.agents-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); box-shadow: 0 0 8px currentColor; }
+.agents-status.busy .agents-status-dot { background: #fff; color: #fff; animation: statePulse 1.4s var(--ease-in) infinite; }
+
+.agents-answer {
+    flex: 0 0 auto; width: min(680px, 100%); align-self: center; margin-bottom: 12px;
+    padding: 16px 18px; border-radius: 16px; font-size: 14px; line-height: 1.55; white-space: pre-wrap;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--line); backdrop-filter: blur(18px);
+    animation: msgIn .5s var(--ease) both;
+}
+.agents-answer .aa-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--ink-3); margin-bottom: 8px; }
+.agents-answer .aa-verdict { display: inline-flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.agents-answer .aa-chip { font-size: 10.5px; letter-spacing: 0.04em; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); }
+
+.agents-composer { flex: 0 0 auto; align-self: center; }
+
+@media (max-width: 700px) {
+    .agents-sub { display: none; }
+    .anode { max-width: 150px; padding: 8px 11px; }
+    .anode-label { font-size: 12px; }
+    .anode-summary { font-size: 10.5px; }
 }
 
 /* ---------- Modal ---------- */

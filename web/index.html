@@ -105,6 +105,19 @@
                     </div>
                     <div class="card-foot">Live block graph<span class="card-arrow">→</span></div>
                 </button>
+
+                <!-- 06 AGENTS (flow) -->
+                <button class="card" data-target="view-agents" id="block-agents">
+                    <div class="card-top">
+                        <span class="card-index">06</span>
+                        <span class="card-kicker">Reasoning</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-label">Agent Theatre</div>
+                        <div class="card-value card-value--sm">Watch the agents think</div>
+                    </div>
+                    <div class="card-foot">Live reasoning map<span class="card-arrow">→</span></div>
+                </button>
             </div>
         </main>
 
@@ -205,6 +218,30 @@
                     <div class="forge-tooltip hidden" id="forge-tooltip"></div>
                 </div>
             </section>
+            <!-- AGENTS · REASONING FLOW -->
+            <section class="detail-view view-agents" id="view-agents">
+                <div class="agents-head">
+                    <div class="eyebrow">Multi-agent reasoning</div>
+                    <h2>Agent Theatre</h2>
+                    <p class="agents-sub">A live map of how your question moves from the orchestrator, through the specialists, past the judge, to a recommendation.</p>
+                </div>
+
+                <div class="agents-stage" id="agents-stage">
+                    <svg class="agents-edges" id="agents-edges" aria-hidden="true"></svg>
+                    <div class="agents-nodes" id="agents-nodes"></div>
+                </div>
+
+                <div class="agents-status" id="agents-status"><span class="agents-status-dot"></span><span id="agents-status-label">Idle — ask something to begin</span></div>
+
+                <div class="agents-answer hidden" id="agents-answer"></div>
+
+                <form class="agents-composer composer" id="agents-form">
+                    <input type="text" id="agents-input" placeholder="Ask the agents — e.g. Can I afford a ₹90,000 iPhone next month?" autocomplete="off" required>
+                    <button type="submit" id="agents-send" aria-label="Run">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19V5m-6 6l6-6 6 6"/></svg>
+                    </button>
+                </form>
+            </section>
         </div>
     </div>
 
@@ -220,5 +257,6 @@
 
     <script src="app.js"></script>
     <script src="tetris.js"></script>
+    <script src="agents.js"></script>
 </body>
 </html>
