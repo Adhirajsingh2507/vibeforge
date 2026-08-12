@@ -43,18 +43,19 @@ MODEL_ID = os.environ.get("GEMMA_MODEL", "google/gemma-4-12B-it")
 
 # Hosted, OpenAI-compatible providers. Both are free-tier and expose the same
 # /chat/completions shape, so one backend serves both -- switch via env only.
-# NIM's free-tier 70B is heavily queued (times out); its 8B is ~0.6s and does the
-# tool-calling fine, so it's the default for the serverless (Vercel) deploy.
+# Groq is the default: benchmarked ~0.8s and 70B-quality synthesis, beating NIM
+# (whose free-tier 70B times out; only its weaker 8B is fast enough). NIM stays as
+# a fallback. Order matters -- auto-detect prefers the first provider whose key set.
 PROVIDERS = {
-    "nim": {
-        "base_url": "https://integrate.api.nvidia.com/v1",
-        "key_env": "NVIDIA_API_KEY",
-        "default_model": "meta/llama-3.1-8b-instruct",
-    },
     "groq": {
         "base_url": "https://api.groq.com/openai/v1",
         "key_env": "GROQ_API_KEY",
         "default_model": "llama-3.3-70b-versatile",
+    },
+    "nim": {
+        "base_url": "https://integrate.api.nvidia.com/v1",
+        "key_env": "NVIDIA_API_KEY",
+        "default_model": "meta/llama-3.1-8b-instruct",
     },
 }
 
@@ -264,7 +265,7 @@ class OpenAICompatBackend:
     so we parse those directly instead of the Gemma <|tool_call> wire format.
     """
 
-    def __init__(self, provider: str = "nim", model_id: str | None = None,
+    def __init__(self, provider: str = "groq", model_id: str | None = None,
                  api_key: str | None = None):
         cfg = PROVIDERS.get(provider)
         if cfg is None:

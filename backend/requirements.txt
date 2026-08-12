@@ -8,9 +8,9 @@ uvicorn>=0.30
 pydantic>=2.7
 
 # --- Hosted LLM backend (OpenAI-compatible, no GPU -- default for cloud/Vercel) ---
-# NVIDIA NIM: set NVIDIA_API_KEY (default model meta/llama-3.1-8b-instruct).
-# Groq:       set GROQ_API_KEY   (default model llama-3.3-70b-versatile).
-# Override the model with LLM_MODEL; force a provider with GEMMA_BACKEND=nim|groq.
+# Groq (default): set GROQ_API_KEY   (default model llama-3.3-70b-versatile).
+# NVIDIA NIM:     set NVIDIA_API_KEY  (default model meta/llama-3.1-8b-instruct).
+# Override the model with LLM_MODEL; force a provider with GEMMA_BACKEND=groq|nim.
 httpx>=0.27
 
 # --- Gemma 4 backend (GPU host: Kaggle T4 x2 / Colab) ---
