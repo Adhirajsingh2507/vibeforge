@@ -16,7 +16,8 @@
     const TARGET_BLOCKS = 12; // tallest tower ~ this many blocks
     const DROP = 6.0;       // how far above a block starts its fall
     const GROUP_ORDER = ['Cashflow', 'Budget', 'Assets', 'Bills', 'Reserves'];
-    const GROUP_FACE = { Cashflow: 0.13, Budget: 0.075, Assets: 0.11, Bills: 0.065, Reserves: 0.10 };
+    // solid greyscale shade per group (monochrome); micro block goes brighter
+    const GROUP_GREY = { Cashflow: 0xe6e6e6, Budget: 0x8f8f8f, Assets: 0xf4f4f4, Bills: 0x707070, Reserves: 0xc0c0c0 };
 
     const BOX_GEO = new THREE.BoxGeometry(BW, BH, BW);
     const EDGE_GEO = new THREE.EdgesGeometry(BOX_GEO);
@@ -73,6 +74,11 @@
 
         const world = new THREE.Group();
         scene.add(world);
+
+        // lights so the solid blocks read as 3D (faces shade by orientation)
+        scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+        const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(4, 8, 5); scene.add(key);
+        const rim = new THREE.DirectionalLight(0xffffff, 0.35); rim.position.set(-5, 3, -4); scene.add(rim);
 
         // faint ground grid — monochrome
         let grid = null;
@@ -194,13 +200,13 @@
     }
 
     // ---- build / diff towers from items (Tetris rebuild) ----
-    function makeBlock(faceOpacity) {
+    function makeBlock(grey) {
         const node = new THREE.Group();
-        const faceMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false });
-        const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+        const faceMat = new THREE.MeshLambertMaterial({ color: grey, transparent: true, opacity: 0 });
+        const edgeMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 });
         node.add(new THREE.Mesh(BOX_GEO, faceMat));
         node.add(new THREE.LineSegments(EDGE_GEO, edgeMat));
-        return { node, faceMat, edgeMat, baseFace: faceOpacity, baseEdge: 0.55, y: 0, target: 0, delay: 0, out: false };
+        return { node, faceMat, edgeMat, grey, baseEdge: 0.28, y: 0, target: 0, delay: 0, out: false };
     }
 
     function rebuild(items, animate) {
@@ -239,9 +245,10 @@
                 t.node.position.x = x; t.node.position.z = z;
                 t.value = it.value; t.group = g; t.label = it.label;
 
+                const grey = GROUP_GREY[g] || 0xa0a0a0;
                 // reconcile block count
                 while (t.blocks.length < nBlocks) {
-                    const b = makeBlock(GROUP_FACE[g] || 0.09);
+                    const b = makeBlock(grey);
                     t.node.add(b.node); t.blocks.push(b);
                 }
                 while (t.blocks.length > nBlocks) {
@@ -253,9 +260,10 @@
                     b.out = false;
                     const micro = nMicro && bi === nBlocks - 1;
                     const h = micro ? BH * frac : BH;
-                    b.node.scale.y = micro ? Math.max(frac, 0.04) : 1;
-                    b.faceMat.opacity = b.baseFace * (micro ? 1.5 : 1);
-                    b.baseEdge = micro ? 0.8 : 0.55;
+                    // 0.9 leaves a small groove between stacked blocks (no coplanar z-fight)
+                    b.node.scale.set(0.9, (micro ? Math.max(frac, 0.04) : 1) * 0.9, 0.9);
+                    b.faceMat.color.setHex(micro ? 0xffffff : grey);  // micro block brighter to flag the remainder
+                    b.baseEdge = micro ? 0.5 : 0.28;
                     b.target = topY + h / 2;
                     b.micro = micro;
                     if (animate) b.delay = bi * 55; // staggered Tetris drop
@@ -375,10 +383,9 @@
                     if (b.delay > 0) { b.delay -= 16; b.node.position.y = b.target + DROP; continue; }
                     b.node.position.y += (b.target - b.node.position.y) * 0.16;
                     b.y = b.node.position.y;
-                    // fade in + hover emphasis
-                    const fface = b.baseFace * (b.micro ? 1.5 : 1) * (1 + t.emph * 1.1);
-                    const edge = b.baseEdge * (1 + t.emph * 0.9);
-                    b.faceMat.opacity += (fface - b.faceMat.opacity) * 0.18;
+                    // fade to fully solid; hover lifts the seam definition
+                    const edge = Math.min(b.baseEdge * (1 + t.emph * 1.6), 1);
+                    b.faceMat.opacity += (1 - b.faceMat.opacity) * 0.18;
                     b.edgeMat.opacity += (edge - b.edgeMat.opacity) * 0.18;
                 }
                 if (t.removing && t.blocks.length === 0) {
