@@ -59,7 +59,7 @@ body {
 }
 
 /* ---------- Topbar ---------- */
-.topbar { display: flex; align-items: center; justify-content: space-between; flex: 0 0 auto; }
+.topbar { display: flex; align-items: center; justify-content: space-between; flex: 0 0 auto; position: relative; z-index: 10; }
 .brand { display: flex; align-items: baseline; gap: 10px; }
 .brand-mark {
     width: 12px; height: 12px; border-radius: 4px; align-self: center;
