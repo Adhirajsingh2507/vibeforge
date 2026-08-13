@@ -11,6 +11,11 @@ const API_BASE = (() => {
     return localStorage.getItem('API_BASE') || '';
 })();
 
+// One conversation session per page load, so follow-ups ("why?", "what if 50k?")
+// resolve against prior findings. Shared with the Agent Theatre via window.
+const SESSION_ID = (crypto.randomUUID && crypto.randomUUID()) || (`s-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+window.SESSION_ID = SESSION_ID;
+
 const formatINR = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -223,7 +228,7 @@ els.chatForm.addEventListener('submit', async (e) => {
     pending.innerHTML = '<i></i><i></i><i></i>';
 
     try {
-        const res = await api('/advise', { method: 'POST', body: JSON.stringify({ query, session_id: null }) });
+        const res = await api('/advise', { method: 'POST', body: JSON.stringify({ query, session_id: SESSION_ID }) });
         window.__lastRun = { ...res, query }; // let the Agent Theatre replay this exact run
 
         // Build the answer: prefer the model's synthesis; drop the generic demo filler.

@@ -222,7 +222,7 @@
         setCell('orchestrator', 'running');
         setBody('orchestrator', 'Reading: “' + trunc(query, 80) + '”');
         try {
-            const res = await api('/advise', { method: 'POST', body: JSON.stringify({ query, session_id: null }) });
+            const res = await api('/advise', { method: 'POST', body: JSON.stringify({ query, session_id: window.SESSION_ID || null }) });
             res.query = query;
             window.__lastRun = res;
             await replay(res);
