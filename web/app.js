@@ -77,6 +77,7 @@ function openDetail(id) {
     if (id === 'view-chat') { AIViz && AIViz.resize(); AIViz && AIViz.setState('idle'); els.chatInput.focus(); }
     if (id === 'view-forge') window.ForgeViz && ForgeViz.open(state.dashboard);
     if (id === 'view-agents') window.AgentFlow && AgentFlow.open();
+    if (id === 'view-scan') scanReset();
 }
 function closeDetail() {
     if (!currentView) return;
@@ -355,6 +356,102 @@ document.getElementById('btn-reset').addEventListener('click', async () => {
     if (!confirm('Reset all data to the demo defaults?')) return;
     try { await api('/financial-data/reset', { method: 'POST' }); await loadData(); } catch (e) {}
 });
+
+// ---------- Document scan -> import ----------
+const scanEls = {
+    drop: document.getElementById('scan-drop'),
+    file: document.getElementById('scan-file'),
+    status: document.getElementById('scan-status'),
+    results: document.getElementById('scan-results'),
+};
+let scanData = { transactions: [], bills: [] };
+
+function scanReset() {
+    scanData = { transactions: [], bills: [] };
+    scanEls.status.className = 'scan-status hidden';
+    scanEls.results.className = 'scan-results hidden';
+    scanEls.results.innerHTML = '';
+    if (scanEls.file) scanEls.file.value = '';
+}
+
+function scanSetStatus(html, isErr) {
+    scanEls.status.innerHTML = html;
+    scanEls.status.className = 'scan-status' + (isErr ? ' err' : '');
+}
+
+async function uploadScan(fileObj) {
+    if (!fileObj) return;
+    scanEls.results.className = 'scan-results hidden';
+    scanEls.results.innerHTML = '';
+    scanSetStatus('<span class="spin"></span>Reading ' + esc(fileObj.name) + ' — this can take a few seconds…');
+    try {
+        const fd = new FormData();
+        fd.append('file', fileObj);
+        const res = await fetch(`${API_BASE}/scan`, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok || data.error) { scanSetStatus(esc(data.error || data.detail || 'Scan failed.'), true); return; }
+        scanData = { transactions: data.transactions || [], bills: data.bills || [] };
+        if (!scanData.transactions.length && !scanData.bills.length) {
+            scanSetStatus(esc(data.note || 'Nothing could be read from this document.'), false);
+            return;
+        }
+        scanSetStatus(esc(data.note || 'Review the items below, then import.'), false);
+        renderScan();
+    } catch (e) {
+        scanSetStatus('Upload failed — check the connection and try again.', true);
+    }
+}
+
+function renderScan() {
+    const rows = (list, type) => list.map((it, i) => `
+        <label class="scan-row">
+            <input type="checkbox" data-type="${type}" data-i="${i}" checked>
+            <div class="sr-main">${esc(it.merchant || it.name)}<div class="sr-sub">${type === 'transaction' ? esc(it.category) + ' · ' + it.date : 'Due ' + it.due_date + (it.autopay ? ' · Auto' : '')}</div></div>
+            <div class="sr-amt">${formatINR(it.amount)}</div>
+        </label>`).join('');
+    const group = (title, list, type) => list.length ? `
+        <div class="scan-group">
+            <div class="scan-group-head"><h3>${title} (${list.length})</h3></div>
+            ${rows(list, type)}
+        </div>` : '';
+    scanEls.results.innerHTML =
+        group('Transactions', scanData.transactions, 'transaction') +
+        group('Bills', scanData.bills, 'bill') +
+        `<div class="scan-actions">
+            <button id="scan-import">Import selected</button>
+            <button class="scan-clear" id="scan-clear">Cancel</button>
+        </div>`;
+    scanEls.results.className = 'scan-results';
+    document.getElementById('scan-import').addEventListener('click', importScan);
+    document.getElementById('scan-clear').addEventListener('click', scanReset);
+}
+
+async function importScan() {
+    const boxes = [...scanEls.results.querySelectorAll('input[type=checkbox]:checked')];
+    if (!boxes.length) { scanSetStatus('Select at least one item to import.', true); return; }
+    const btn = document.getElementById('scan-import');
+    btn.disabled = true; scanSetStatus('<span class="spin"></span>Importing ' + boxes.length + ' item(s)…');
+    let ok = 0;
+    for (const b of boxes) {
+        const type = b.dataset.type, it = scanData[type === 'transaction' ? 'transactions' : 'bills'][+b.dataset.i];
+        try {
+            await api(`/financial-data/${type === 'transaction' ? 'transactions' : 'bills'}`, { method: 'POST', body: JSON.stringify(it), silent: true });
+            ok++;
+        } catch (e) { /* skip failures, keep going */ }
+    }
+    await loadData();
+    scanSetStatus(`Imported ${ok} item(s) into your dashboard.`, false);
+    scanEls.results.className = 'scan-results hidden';
+    scanEls.results.innerHTML = '';
+    scanEls.file.value = '';
+}
+
+if (scanEls.drop) {
+    scanEls.file.addEventListener('change', (e) => uploadScan(e.target.files[0]));
+    ['dragover', 'dragenter'].forEach((ev) => scanEls.drop.addEventListener(ev, (e) => { e.preventDefault(); scanEls.drop.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach((ev) => scanEls.drop.addEventListener(ev, (e) => { e.preventDefault(); scanEls.drop.classList.remove('dragover'); }));
+    scanEls.drop.addEventListener('drop', (e) => { if (e.dataTransfer.files[0]) uploadScan(e.dataTransfer.files[0]); });
+}
 
 // ============================================================
 // AI-reactive visualization: a glass core + a GPU particle

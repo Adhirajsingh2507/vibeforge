@@ -117,6 +117,12 @@ def advise(query: str, session_id: str | None = None,
         conversation.clear(sid)  # token is the source of truth; keep the server stateless
 
 
+# --- document scan -> importable rows ---
+def scan(data: bytes, content_type: str, filename: str) -> dict:
+    import scan as scanner
+    return scanner.extract(data, content_type, filename)
+
+
 # --- conversation sessions ---
 def new_session() -> dict:
     import conversation

@@ -6,6 +6,8 @@
 fastapi>=0.115
 uvicorn>=0.30
 pydantic>=2.7
+python-multipart>=0.0.9   # multipart uploads for POST /scan
+pypdf>=4.0                # digital-PDF text extraction for the document scanner
 
 # --- Hosted LLM backend (OpenAI-compatible, no GPU -- default for cloud/Vercel) ---
 # Groq (default): set GROQ_API_KEY   (default model llama-3.3-70b-versatile).

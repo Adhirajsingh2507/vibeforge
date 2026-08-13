@@ -3,3 +3,5 @@
 fastapi>=0.115
 pydantic>=2.7
 httpx>=0.27
+python-multipart>=0.0.9   # multipart uploads for POST /scan
+pypdf>=4.0                # digital-PDF text extraction for the document scanner

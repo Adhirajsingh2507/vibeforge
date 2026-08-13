@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -61,6 +61,16 @@ def dashboard():
 def advise(req: AdviseRequest):
     return service.advise(req.query, session_id=req.session_id,
                           context_token=req.context_token)
+
+
+@app.post("/scan")
+def scan(file: UploadFile = File(...)):
+    data = file.file.read()
+    if not data:
+        raise HTTPException(400, "empty file")
+    if len(data) > 20_000_000:  # 20 MB cap (Vercel accepts up to 100MB; this is plenty)
+        raise HTTPException(413, "file too large (max 20 MB)")
+    return service.scan(data, file.content_type or "", file.filename or "")
 
 
 # --- conversation sessions (multi-turn) ---

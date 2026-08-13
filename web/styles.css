@@ -461,6 +461,53 @@ body {
 /* topbar back button — arrow only */
 .ghost-btn.icon-only { padding: 9px; }
 
+/* ---------- Scan · document import ---------- */
+.scan-drop {
+    display: block; margin-top: clamp(18px, 3vh, 30px); cursor: pointer;
+    border: 1px dashed var(--line-2); border-radius: var(--radius);
+    background: var(--glass); backdrop-filter: blur(14px);
+    transition: border-color .25s, background .25s, transform .2s var(--ease);
+}
+.scan-drop:hover, .scan-drop.dragover { border-color: rgba(255,255,255,0.4); background: var(--glass-2); }
+.scan-drop.dragover { transform: scale(1.005); }
+.scan-drop-inner { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
+    padding: clamp(34px, 7vh, 68px) 24px; color: var(--ink-2); }
+.scan-drop-inner svg { color: var(--ink-3); }
+.scan-drop-text { font-size: 14px; line-height: 1.5; }
+.scan-drop-text span { display: block; margin-top: 6px; font-size: 11px; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase; }
+
+.scan-status {
+    margin-top: 18px; padding: 14px 16px; border-radius: var(--radius-sm); font-size: 13px; line-height: 1.5;
+    background: var(--glass); border: 1px solid var(--line); color: var(--ink-2);
+}
+.scan-status.err { border-color: rgba(255,120,120,0.4); color: #ffb4b4; }
+.scan-status .spin { display: inline-block; width: 12px; height: 12px; margin-right: 9px; vertical-align: -1px;
+    border: 2px solid var(--line-2); border-top-color: #fff; border-radius: 50%; animation: scanSpin .8s linear infinite; }
+@keyframes scanSpin { to { transform: rotate(360deg); } }
+
+.scan-results { margin-top: 20px; }
+.scan-group { margin-top: 18px; }
+.scan-group-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.scan-group-head h3 { font-size: 13px; font-weight: 500; color: var(--ink-2); letter-spacing: 0.02em; }
+.scan-group-head .scan-toggle { font-size: 11px; color: var(--ink-3); cursor: pointer; background: none; border: 0; }
+.scan-row {
+    display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--line); background: var(--glass); margin-bottom: 8px;
+}
+.scan-row input[type=checkbox] { width: 17px; height: 17px; accent-color: #fff; flex: 0 0 auto; }
+.scan-row .sr-main { flex: 1 1 auto; min-width: 0; font-size: 13.5px; }
+.scan-row .sr-sub { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-top: 3px; }
+.scan-row .sr-amt { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; white-space: nowrap; }
+.scan-actions { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+.scan-actions button {
+    font-family: var(--font); font-size: 14px; font-weight: 500; color: #0a0a0a; cursor: pointer;
+    padding: 13px 22px; border-radius: 12px; background: #fff; border: 0;
+    transition: transform .2s var(--ease), opacity .2s;
+}
+.scan-actions button:hover { transform: translateY(-1px); }
+.scan-actions button:disabled { opacity: 0.5; }
+.scan-actions .scan-clear { background: var(--glass-2); color: var(--ink-2); border: 1px solid var(--line-2); }
+
 /* ---------- Modal ---------- */
 .modal-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); transition: opacity .3s; }
 .modal-backdrop.hidden { opacity: 0; pointer-events: none; }

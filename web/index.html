@@ -123,6 +123,19 @@
                     </div>
                     <div class="card-foot">Live reasoning map<span class="card-arrow">→</span></div>
                 </button>
+
+                <!-- 07 SCAN (import) -->
+                <button class="card" data-target="view-scan" id="block-scan">
+                    <div class="card-top">
+                        <span class="card-index">07</span>
+                        <span class="card-kicker">Import</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-label">Scan</div>
+                        <div class="card-value card-value--sm">Upload a bill or statement</div>
+                    </div>
+                    <div class="card-foot">Read &amp; import<span class="card-arrow">→</span></div>
+                </button>
             </div>
         </main>
 
@@ -223,6 +236,24 @@
                     <div class="forge-tooltip hidden" id="forge-tooltip"></div>
                 </div>
             </section>
+            <!-- SCAN · DOCUMENT IMPORT -->
+            <section class="detail-view" id="view-scan">
+                <div class="detail-inner">
+                    <div class="detail-head">
+                        <div><div class="eyebrow">Import</div><h2>Scan a document</h2></div>
+                    </div>
+                    <label class="scan-drop" id="scan-drop">
+                        <input type="file" id="scan-file" accept="image/*,application/pdf,.pdf" hidden>
+                        <div class="scan-drop-inner">
+                            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4m-5 5l5-5 5 5M5 20h14"/></svg>
+                            <div class="scan-drop-text">Drop a bill, bank statement or receipt<span>PNG · JPG · photo · text PDF · max 20 MB</span></div>
+                        </div>
+                    </label>
+                    <div class="scan-status hidden" id="scan-status"></div>
+                    <div class="scan-results hidden" id="scan-results"></div>
+                </div>
+            </section>
+
             <!-- AGENTS · SWISS REASONING GRID -->
             <section class="detail-view view-agents" id="view-agents">
                 <div class="agents-titlebar">
