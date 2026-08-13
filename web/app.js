@@ -228,7 +228,8 @@ els.chatForm.addEventListener('submit', async (e) => {
     pending.innerHTML = '<i></i><i></i><i></i>';
 
     try {
-        const res = await api('/advise', { method: 'POST', body: JSON.stringify({ query, session_id: SESSION_ID }) });
+        const res = await api('/advise', { method: 'POST', body: JSON.stringify({ query, session_id: SESSION_ID, context_token: window.__ctxToken || null }) });
+        if (res.context_token) window.__ctxToken = res.context_token; // stateless follow-up memory
         window.__lastRun = { ...res, query }; // let the Agent Theatre replay this exact run
 
         // Build the answer: prefer the model's synthesis; drop the generic demo filler.

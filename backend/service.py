@@ -81,21 +81,40 @@ def get_orchestrator() -> Orchestrator:
     return _orch
 
 
-def advise(query: str, session_id: str | None = None) -> dict:
+def advise(query: str, session_id: str | None = None,
+           context_token: str | None = None) -> dict:
     """Run one query through the orchestrator; return a JSON-able dict.
+
+    Stateless conversation: instead of a server-side session store, the client
+    replays a signed `context_token`. We hydrate an ephemeral per-request session
+    from it, reuse all the existing follow-up logic, then re-sign the updated
+    turns back into a fresh token and clear the session. So follow-ups survive
+    cold starts and instance fan-out with no shared state.
 
     Security: the raw 'reasoning' (Gemma's chain-of-thought) is stripped from the
     trace before it leaves the backend. The UI only ever sees safe execution
     metadata -- which agents ran, their deterministic result summaries, and the
     Judge verdict."""
-    result: Advice = get_orchestrator().advise(query, session_id=session_id)
-    payload = asdict(result)
-    for step in payload.get("trace", []):
-        step.pop("reasoning", None)  # never expose hidden reasoning / thought tokens
-    # findings can be large/nested; the UI only needs summaries, which are in trace.
-    payload["findings"] = [{"agent": f.get("agent"), "summary": f.get("summary")}
-                           for f in payload.get("findings", [])]
-    return payload
+    import uuid
+
+    import conversation
+    import session_token
+
+    sid = "req-" + uuid.uuid4().hex  # ephemeral, per-request -> concurrency-safe
+    conversation.load(sid, session_token.decode(context_token))
+    try:
+        result: Advice = get_orchestrator().advise(query, session_id=sid)
+        payload = asdict(result)
+        for step in payload.get("trace", []):
+            step.pop("reasoning", None)  # never expose hidden reasoning / thought tokens
+        # findings can be large/nested; the UI only needs summaries, which are in trace.
+        payload["findings"] = [{"agent": f.get("agent"), "summary": f.get("summary")}
+                               for f in payload.get("findings", [])]
+        payload["context_token"] = session_token.encode(conversation.turns(sid))
+        payload.pop("session_id", None)  # the token replaces server-side session ids
+        return payload
+    finally:
+        conversation.clear(sid)  # token is the source of truth; keep the server stateless
 
 
 # --- conversation sessions ---

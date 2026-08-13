@@ -59,7 +59,8 @@ def dashboard():
 
 @app.post("/advise")
 def advise(req: AdviseRequest):
-    return service.advise(req.query, session_id=req.session_id)
+    return service.advise(req.query, session_id=req.session_id,
+                          context_token=req.context_token)
 
 
 # --- conversation sessions (multi-turn) ---

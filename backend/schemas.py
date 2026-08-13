@@ -91,3 +91,4 @@ class InvestmentPatch(BaseModel):
 class AdviseRequest(BaseModel):
     query: str = Field(min_length=1, max_length=500)
     session_id: str | None = None
+    context_token: str | None = None  # signed conversation state, replayed by the client

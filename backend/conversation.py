@@ -41,6 +41,13 @@ def clear(sid: str) -> None:
         _sessions[sid] = {"turns": []}
 
 
+def load(sid: str, turns: list[dict]) -> None:
+    """Seed a session from an external source (e.g. a decoded signed token),
+    so the stateless-token path reuses all the existing follow-up logic."""
+    with _lock:
+        _sessions[sid] = {"turns": list(turns or [])[-MAX_TURNS:]}
+
+
 def turns(sid: str) -> list[dict]:
     return _sess(sid)["turns"]
 

@@ -48,21 +48,23 @@ def test_routing():
 
 
 def test_multiturn_and_costs():
-    section("MULTI-TURN conversation + generation counts")
+    section("MULTI-TURN conversation + generation counts (stateless token)")
     store.reset()
-    sid = service.new_session()["session_id"]
     turns = [
         ("Can I afford a ₹90,000 iPhone?", router.DECISION, 2),
         ("Why not?", router.FOLLOWUP_EXPLAIN, 1),
         ("What if it cost ₹50,000?", router.FOLLOWUP_WHATIF, 2),
         ("What EMI would that be for 12 months?", router.FOLLOWUP_WHATIF, 2),
     ]
+    tok = None  # conversation state is carried by the signed token, not a server session
     for q, intent, max_calls in turns:
-        r = service.advise(q, session_id=sid)
+        r = service.advise(q, context_token=tok)
+        tok = r.get("context_token")
         print(f"  [{r['intent']:16s}] gemma_calls={r['gemma_calls']} :: {q}")
         assert r["intent"] == intent, f"{q}: {r['intent']} != {intent}"
         assert r["gemma_calls"] <= max_calls, f"{q}: {r['gemma_calls']} > {max_calls}"
         assert "reasoning" not in str(r["trace"]), "raw reasoning leaked!"
+        assert tok, "no context_token returned"
 
 
 def test_fast_path_zero_gemma():
