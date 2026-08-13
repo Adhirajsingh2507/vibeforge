@@ -79,6 +79,7 @@ function openDetail(id) {
     if (id === 'view-agents') window.AgentFlow && AgentFlow.open();
     if (id === 'view-scan') scanReset();
 }
+window.openDetail = openDetail; // used by the 3D hero to route on click
 function closeDetail() {
     if (!currentView) return;
     const view = currentView; currentView = null;
