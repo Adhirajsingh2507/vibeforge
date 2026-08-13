@@ -47,14 +47,15 @@
         if (window.innerWidth < 768) return;           // mobile → grid
         const host = document.getElementById('hero3d');
         if (!host) return;
-        try { init(host); document.body.classList.add('hero3d-on'); }
-        catch (e) { console.error('hero3d init failed, keeping 2D grid:', e); }
+        document.body.classList.add('hero3d-on'); // reveal host FIRST so it has real size
+        try { init(host); }
+        catch (e) { console.error('hero3d init failed, keeping 2D grid:', e); document.body.classList.remove('hero3d-on'); }
     }
 
     function init(host) {
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(CFG.cameraFov, 1, 0.1, 100);
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, CFG.pixelRatioMax));
         host.appendChild(renderer.domElement);
 
@@ -221,6 +222,8 @@
             renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
         }
         window.addEventListener('resize', resize); resize();
+        if (window.ResizeObserver) new ResizeObserver(resize).observe(host);
+        requestAnimationFrame(resize);
 
         // --- mount animation ---
         let t0 = performance.now();
