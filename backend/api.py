@@ -63,6 +63,21 @@ def advise(req: AdviseRequest):
                           context_token=req.context_token)
 
 
+@app.get("/_models")  # temporary diagnostic: list Groq model ids available to this key
+def list_models():
+    import os
+
+    import httpx
+    key = os.environ.get("GROQ_API_KEY")
+    if not key:
+        return {"error": "no GROQ_API_KEY"}
+    r = httpx.get("https://api.groq.com/openai/v1/models",
+                  headers={"Authorization": f"Bearer {key}"}, timeout=30)
+    ids = sorted(m["id"] for m in r.json().get("data", []))
+    return {"models": ids, "vision_hint": [m for m in ids if any(
+        k in m for k in ("vision", "scout", "maverick", "llama-4", "vl"))]}
+
+
 @app.post("/scan")
 def scan(file: UploadFile = File(...)):
     data = file.file.read()
