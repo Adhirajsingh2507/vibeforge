@@ -11,7 +11,7 @@
 (function () {
     const CFG = {
         cameraFov: 45,
-        cameraRadius: 12.2,       // frames the outer arcs (~70% width) — tune
+        cameraRadius: 10.6,       // frames the outer arcs (~70% width)
         targetY: 0.5,
         autoRotateSecs: 90,       // one revolution
         azimuthClampDeg: 35,      // drag limit around the base angle
@@ -35,13 +35,12 @@
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function boot() {
-        // PREVIEW FLAG: off by default so production keeps the verified 2D grid.
-        // Enable with ?hero3d=1 (persists), disable with ?hero3d=0. Flip to always-on
-        // once the scene is visually tuned and approved.
+        // ON by default on desktop. Disable with ?hero3d=0 (persists), re-enable
+        // with ?hero3d=1. The 2D grid remains the fallback everywhere else.
         const q = new URLSearchParams(location.search).get('hero3d');
-        if (q === '1') localStorage.setItem('hero3d', '1');
-        if (q === '0') localStorage.removeItem('hero3d');
-        if (localStorage.getItem('hero3d') !== '1') return;
+        if (q === '0') { localStorage.setItem('hero3d', 'off'); return; }
+        if (q === '1') localStorage.removeItem('hero3d');
+        if (localStorage.getItem('hero3d') === 'off') return;
 
         if (typeof THREE === 'undefined') return;      // grid stays (fallback)
         if (window.innerWidth < 768) return;           // mobile → grid
