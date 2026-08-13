@@ -95,10 +95,21 @@ body {
 
 /* ---------- Home ---------- */
 .home {
+    position: relative;
     flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
     gap: clamp(16px, 2.4vw, 30px); transition: opacity .4s, transform .5s var(--ease);
 }
 .home.dim { opacity: 0; transform: scale(0.985); pointer-events: none; }
+/* faint desaturated illustration texture behind the grid (scoped to home) */
+.home-bg {
+    position: absolute; inset: -4%; z-index: 0; pointer-events: none;
+    background: url('home-bg.jpeg') center/cover no-repeat;
+    filter: grayscale(1) brightness(0.5) contrast(1.05);
+    opacity: 0.10;
+    -webkit-mask-image: radial-gradient(120% 100% at 50% 40%, #000 40%, transparent 92%);
+    mask-image: radial-gradient(120% 100% at 50% 40%, #000 40%, transparent 92%);
+}
+.home-lede, .card-grid { position: relative; z-index: 1; }
 
 .home-lede h1 { font-size: clamp(26px, 3.6vw, 42px); font-weight: 500; letter-spacing: -0.03em; }
 .home-lede p { margin-top: 6px; color: var(--ink-3); font-size: clamp(13px, 1.4vw, 15px); }
