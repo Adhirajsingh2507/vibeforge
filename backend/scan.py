@@ -23,8 +23,18 @@ import httpx
 from schemas import BillIn, TransactionIn
 
 GROQ_BASE = "https://api.groq.com/openai/v1"
-VISION_MODEL = os.environ.get("LLM_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
 TEXT_MODEL = os.environ.get("LLM_MODEL", "llama-3.3-70b-versatile")
+
+# Vision is pluggable: point at ANY OpenAI-compatible vision provider via env.
+# Groq currently ships no vision model, so images need e.g. Google Gemini:
+#   LLM_VISION_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+#   LLM_VISION_API_KEY=<gemini key>   LLM_VISION_MODEL=gemini-2.5-flash
+VISION_BASE = os.environ.get("LLM_VISION_BASE_URL", GROQ_BASE)
+VISION_KEY = os.environ.get("LLM_VISION_API_KEY") or os.environ.get("GROQ_API_KEY", "")
+VISION_MODEL = os.environ.get("LLM_VISION_MODEL", "")
+_NO_VISION_MSG = ("Image scanning needs a vision model. This Groq key has none — "
+                  "set LLM_VISION_BASE_URL, LLM_VISION_API_KEY and LLM_VISION_MODEL "
+                  "(e.g. Google Gemini). Digital (text) PDFs work without it.")
 
 _PROMPT = (
     "You are a financial-document parser. From the document, extract every "
@@ -49,8 +59,11 @@ def extract(data: bytes, content_type: str, filename: str) -> dict:
 
     ct = (content_type or "").lower()
     name = (filename or "").lower()
+    is_image = ct in _IMAGE_TYPES or name.endswith((".jpg", ".jpeg", ".png", ".webp", ".gif"))
+    if is_image and not VISION_MODEL:
+        return {"error": _NO_VISION_MSG, "transactions": [], "bills": []}
     try:
-        if ct in _IMAGE_TYPES or name.endswith((".jpg", ".jpeg", ".png", ".webp", ".gif")):
+        if is_image:
             raw = _vision(data, ct or "image/jpeg")
         elif ct == "application/pdf" or name.endswith(".pdf"):
             text = _pdf_text(data)
@@ -79,10 +92,10 @@ def extract(data: bytes, content_type: str, filename: str) -> dict:
 
 
 # --- LLM calls ---------------------------------------------------------------
-def _groq(messages: list[dict], model: str) -> str:
+def _chat(base: str, key: str, model: str, messages: list[dict]) -> str:
     r = httpx.post(
-        f"{GROQ_BASE}/chat/completions",
-        headers={"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"},
+        f"{base}/chat/completions",
+        headers={"Authorization": f"Bearer {key}"},
         json={"model": model, "messages": messages, "temperature": 0, "max_tokens": 1500},
         timeout=90,
     )
@@ -91,16 +104,16 @@ def _groq(messages: list[dict], model: str) -> str:
 
 
 def _vision(data: bytes, mime: str) -> str:
-    b64 = base64.b64encode(data).decode()
-    url = f"data:{mime};base64,{b64}"
-    return _groq([{"role": "user", "content": [
+    url = f"data:{mime};base64,{base64.b64encode(data).decode()}"
+    return _chat(VISION_BASE, VISION_KEY, VISION_MODEL, [{"role": "user", "content": [
         {"type": "text", "text": _PROMPT},
         {"type": "image_url", "image_url": {"url": url}},
-    ]}], VISION_MODEL)
+    ]}])
 
 
 def _text(doc: str) -> str:
-    return _groq([{"role": "user", "content": f"{_PROMPT}\n\nDocument:\n{doc[:12000]}"}], TEXT_MODEL)
+    return _chat(GROQ_BASE, os.environ["GROQ_API_KEY"], TEXT_MODEL,
+                 [{"role": "user", "content": f"{_PROMPT}\n\nDocument:\n{doc[:12000]}"}])
 
 
 def _pdf_text(data: bytes) -> str:
