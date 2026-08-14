@@ -25,18 +25,19 @@
         pixelRatioMax: 2,
     };
 
-    const AMBER = 0xffb020, TEAL = 0x3fe0d0, VIOLET = 0xa877ff;
+    const AMBER = 0xffb020, TEAL = 0x3fe0d0, VIOLET = 0xa877ff;   // reactor core + inner blocks
     const ACCENTS = [AMBER, TEAL, VIOLET];
-    const HEX = { [AMBER]: '#ffb020', [TEAL]: '#3fe0d0', [VIOLET]: '#a877ff' };
+    const toHex = (n) => '#' + (n & 0xffffff).toString(16).padStart(6, '0');
+    // one distinct colour per card — instantly recognisable, no repeats
     const ARCS = [ // clockwise from front
-        { id: 'view-budget', idx: '01', eyebrow: 'Overview', title: 'Budget & cashflow', desc: 'Net worth, cashflow and your transaction ledger.', valueSel: '#preview-net-worth', accent: 0 },
-        { id: 'view-investments', idx: '02', eyebrow: 'Assets', title: 'Portfolio', desc: 'Holdings, SIP and liquidity at a glance.', valueSel: '#preview-investments', accent: 1 },
-        { id: 'view-bills', idx: '03', eyebrow: 'Upcoming', title: 'Bills due', desc: "What's due this billing cycle.", valueSel: '#preview-bills', accent: 2 },
-        { id: 'view-chat', idx: '04', eyebrow: 'Intelligence', title: 'AI Orchestrator', desc: 'Ask anything — the multi-agent CFO answers.', valueSel: null, accent: 0 },
-        { id: 'view-agents', idx: '06', eyebrow: 'Reasoning', title: 'Agent Theatre', desc: 'Watch the agents reason, step by step.', valueSel: null, accent: 1 },
-        { id: 'view-scan', idx: '07', eyebrow: 'Import', title: 'Scan a document', desc: 'Upload a bill or statement to import it.', valueSel: null, accent: 2 },
+        { id: 'view-budget', idx: '01', eyebrow: 'Overview', title: 'Budget & cashflow', desc: 'Net worth, cashflow and your transaction ledger.', valueSel: '#preview-net-worth', accent: 0x30e07a },  // green
+        { id: 'view-investments', idx: '02', eyebrow: 'Assets', title: 'Portfolio', desc: 'Holdings, SIP and liquidity at a glance.', valueSel: '#preview-investments', accent: 0x5a7cff },      // blue
+        { id: 'view-bills', idx: '03', eyebrow: 'Upcoming', title: 'Bills due', desc: "What's due this billing cycle.", valueSel: '#preview-bills', accent: 0xff4d6a },                              // red
+        { id: 'view-chat', idx: '04', eyebrow: 'Intelligence', title: 'AI Orchestrator', desc: 'Ask anything — the multi-agent CFO answers.', valueSel: null, accent: 0x30d6e0 },                     // cyan
+        { id: 'view-agents', idx: '06', eyebrow: 'Reasoning', title: 'Agent Theatre', desc: 'Watch the agents reason, step by step.', valueSel: null, accent: 0xc060ff },                            // purple
+        { id: 'view-scan', idx: '07', eyebrow: 'Import', title: 'Scan a document', desc: 'Upload a bill or statement to import it.', valueSel: null, accent: 0x9fe030 },                              // lime
     ];
-    const CENTER = { id: 'view-forge', idx: '05', eyebrow: 'Spatial', title: 'The Forge', desc: 'Every rupee as a living 3D Tetris tower.', valueSel: '#preview-net-worth', accent: 0 };
+    const CENTER = { id: 'view-forge', idx: '05', eyebrow: 'Spatial', title: 'The Forge', desc: 'Every rupee as a living 3D Tetris tower.', valueSel: '#preview-net-worth', accent: 0xffb020 };       // amber (the core)
     const DEG = Math.PI / 180;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -135,7 +136,7 @@
         ARCS.forEach((cfg, i) => {
             const g = new THREE.Group();
             const start = -i * 60 * DEG;                    // 46° band + 14° gap = 60° slot
-            const accent = ACCENTS[cfg.accent];
+            const accent = cfg.accent;                      // unique per-card colour
             const bandMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.18, roughness: 0.45, metalness: 0.2 });
             const band = new THREE.Mesh(arcBandGeo(3.05, 3.56, 3.33, 46 * DEG), bandMat);
             band.position.y = 0.02; band.userData.arc = i; g.add(band); pick.push(band);
@@ -245,7 +246,7 @@
         }
         function showLabel(cfg, isCenter, arc) {
             const val = cfg.valueSel ? (document.querySelector(cfg.valueSel)?.textContent || '') : '';
-            label.style.setProperty('--acc', HEX[ACCENTS[cfg.accent]]);
+            label.style.setProperty('--acc', toHex(cfg.accent));
             label.innerHTML =
                 `<div class="hl-eyebrow">${cfg.idx} · ${cfg.eyebrow.toUpperCase()}</div>` +
                 `<div class="hl-title">${cfg.title}</div>` +
