@@ -121,18 +121,35 @@ body.hero3d-on .hero3d { display: block; }
     body.hero3d-on .card-grid { display: grid; }
     body.hero3d-on .hero3d { display: none; }
 }
-/* hover detail label anchored to an arc's head block */
+/* premium hover pop-up anchored above an arc / the centre card */
 .hero-label {
-    position: absolute; z-index: 3; pointer-events: none; opacity: 0; transform: translate(-50%, -100%);
-    min-width: 150px; max-width: 240px; padding: 12px 14px; border-radius: 14px;
-    background: rgba(12,12,16,0.82); border: 1px solid var(--line-2); backdrop-filter: blur(16px);
-    box-shadow: var(--shadow); transition: opacity .2s var(--ease);
+    --acc: #ffb020;
+    position: absolute; z-index: 3; pointer-events: none;
+    opacity: 0; transform: translate(-50%, -92%) scale(0.9); transform-origin: 50% 100%;
+    min-width: 168px; max-width: 244px; padding: 13px 15px 12px; border-radius: 16px;
+    background: linear-gradient(180deg, rgba(20,20,26,0.92), rgba(10,10,14,0.92));
+    border: 1px solid var(--line-2); backdrop-filter: blur(20px) saturate(1.3);
+    box-shadow: var(--shadow), 0 0 0 1px color-mix(in srgb, var(--acc) 22%, transparent),
+        0 10px 40px -12px color-mix(in srgb, var(--acc) 45%, transparent);
+    transition: opacity .26s var(--ease), transform .34s cubic-bezier(0.22, 1.4, 0.4, 1);
+    will-change: left, top, transform, opacity;
 }
-.hero-label.show { opacity: 1; }
-.hero-label .hl-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--ink-3); }
-.hero-label .hl-title { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; margin-top: 5px; }
-.hero-label .hl-value { font-size: 13px; color: var(--ink-2); margin-top: 6px; font-variant-numeric: tabular-nums; }
-.hero-label .hl-link { font-size: 11px; color: var(--ink-3); margin-top: 8px; }
+.hero-label.show { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+/* accent bar + downward pointer */
+.hero-label::before {
+    content: ""; position: absolute; top: 0; left: 15px; right: 15px; height: 2px; border-radius: 2px;
+    background: var(--acc); box-shadow: 0 0 10px var(--acc);
+}
+.hero-label::after {
+    content: ""; position: absolute; bottom: -6px; left: 50%; width: 12px; height: 12px;
+    transform: translateX(-50%) rotate(45deg);
+    background: rgba(10,10,14,0.92); border-right: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2);
+}
+.hero-label .hl-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--acc); font-weight: 600; }
+.hero-label .hl-title { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; margin-top: 6px; }
+.hero-label .hl-desc { font-size: 11.5px; line-height: 1.45; color: var(--ink-3); margin-top: 5px; }
+.hero-label .hl-value { font-size: 15px; font-weight: 500; color: var(--ink); margin-top: 9px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.hero-label .hl-link { font-size: 11px; letter-spacing: 0.03em; color: var(--acc); margin-top: 10px; }
 
 .home-lede h1 { font-size: clamp(26px, 3.6vw, 42px); font-weight: 500; letter-spacing: -0.03em; }
 .home-lede p { margin-top: 6px; color: var(--ink-3); font-size: clamp(13px, 1.4vw, 15px); }

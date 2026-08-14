@@ -13,24 +13,30 @@
         cameraFov: 45,
         cameraRadius: 10.6,       // frames the outer arcs (~70% width)
         targetY: 0.5,
-        autoRotateSecs: 90,       // one revolution
-        azimuthClampDeg: 35,      // drag limit around the base angle
-        polarMinDeg: 25, polarMaxDeg: 70,
+        autoRotateSecs: 120,      // one gentle revolution when idle
+        autoResumeMs: 2600,       // idle time before the gentle spin eases back in
+        friction: 0.93,           // inertia decay after a drag release
+        dragSpeed: 0.006,
+        azimuthClampDeg: 38,      // manual look-around limit (auto-spin is unclamped)
+        polarMinDeg: 26, polarMaxDeg: 66,
         showNumerals: true,       // curved index numerals on each band
         numeralTuneRad: 0,        // add to glyph rotation if orientation looks off
+        hoverLift: 0.14,
         pixelRatioMax: 2,
     };
 
     const AMBER = 0xffb020, TEAL = 0x3fe0d0, VIOLET = 0xa877ff;
     const ACCENTS = [AMBER, TEAL, VIOLET];
+    const HEX = { [AMBER]: '#ffb020', [TEAL]: '#3fe0d0', [VIOLET]: '#a877ff' };
     const ARCS = [ // clockwise from front
-        { id: 'view-budget', idx: '01', eyebrow: 'Overview', title: 'Budget & cashflow', valueSel: '#preview-net-worth', accent: 0 },
-        { id: 'view-investments', idx: '02', eyebrow: 'Assets', title: 'Portfolio', valueSel: '#preview-investments', accent: 1 },
-        { id: 'view-bills', idx: '03', eyebrow: 'Upcoming', title: 'Bills due', valueSel: '#preview-bills', accent: 2 },
-        { id: 'view-chat', idx: '04', eyebrow: 'Intelligence', title: 'AI Orchestrator', valueSel: null, accent: 0 },
-        { id: 'view-agents', idx: '06', eyebrow: 'Reasoning', title: 'Agent Theatre', valueSel: null, accent: 1 },
-        { id: 'view-scan', idx: '07', eyebrow: 'Import', title: 'Scan a document', valueSel: null, accent: 2 },
+        { id: 'view-budget', idx: '01', eyebrow: 'Overview', title: 'Budget & cashflow', desc: 'Net worth, cashflow and your transaction ledger.', valueSel: '#preview-net-worth', accent: 0 },
+        { id: 'view-investments', idx: '02', eyebrow: 'Assets', title: 'Portfolio', desc: 'Holdings, SIP and liquidity at a glance.', valueSel: '#preview-investments', accent: 1 },
+        { id: 'view-bills', idx: '03', eyebrow: 'Upcoming', title: 'Bills due', desc: "What's due this billing cycle.", valueSel: '#preview-bills', accent: 2 },
+        { id: 'view-chat', idx: '04', eyebrow: 'Intelligence', title: 'AI Orchestrator', desc: 'Ask anything — the multi-agent CFO answers.', valueSel: null, accent: 0 },
+        { id: 'view-agents', idx: '06', eyebrow: 'Reasoning', title: 'Agent Theatre', desc: 'Watch the agents reason, step by step.', valueSel: null, accent: 1 },
+        { id: 'view-scan', idx: '07', eyebrow: 'Import', title: 'Scan a document', desc: 'Upload a bill or statement to import it.', valueSel: null, accent: 2 },
     ];
+    const CENTER = { id: 'view-forge', idx: '05', eyebrow: 'Spatial', title: 'The Forge', desc: 'Every rupee as a living 3D Tetris tower.', valueSel: '#preview-net-worth', accent: 0 };
     const DEG = Math.PI / 180;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -151,68 +157,104 @@
         const shadow = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.5, depthWrite: false }));
         shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.005; root.add(shadow);
 
-        // --- hover label ---
+        // --- premium hover pop-up ---
         const label = document.createElement('div'); label.className = 'hero-label'; host.appendChild(label);
+        let hoverIdx = -1;                        // -1 none, 'c' centre, 0..n an arc
+        const labelPx = { x: 0, y: 0 }; let labelInit = false;
 
-        // --- camera orbit state ---
+        // --- camera: free auto-spin + clamped manual look-around, with inertia ---
         const base = spherical(0.38, 2.0, 0.95);
-        const orb = { theta: base.theta, phi: base.phi, tTheta: base.theta, tPhi: base.phi, radius: CFG.cameraRadius, auto: !reduced, dragging: false };
-        const clampAz = CFG.azimuthClampDeg * DEG;
+        const clampAz = CFG.azimuthClampDeg * DEG, pMin = CFG.polarMinDeg * DEG, pMax = CFG.polarMaxDeg * DEG;
+        const AUTO = (Math.PI * 2) / (CFG.autoRotateSecs * 60);
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+        const orb = {
+            autoAngle: 0, autoSpeed: reduced ? 0 : AUTO,
+            mTheta: 0, mtTheta: 0, vTheta: 0,     // manual azimuth offset (damped, clamped)
+            phi: base.phi, tPhi: base.phi, vPhi: 0,
+            radius: CFG.cameraRadius, dragging: false, lastInteract: -1e9,
+        };
         const target = new THREE.Vector3(0, CFG.targetY, 0);
-        function applyCam() {
-            orb.tTheta = Math.max(base.theta - clampAz, Math.min(base.theta + clampAz, orb.tTheta));
-            orb.tPhi = Math.max(CFG.polarMinDeg * DEG, Math.min(CFG.polarMaxDeg * DEG, orb.tPhi));
-            if (!orb.dragging && !orb.auto) { orb.theta += (orb.tTheta - orb.theta) * 0.1; orb.phi += (orb.tPhi - orb.phi) * 0.1; }
-            const sp = Math.sin(orb.phi);
-            camera.position.set(target.x + orb.radius * sp * Math.sin(orb.theta), target.y + orb.radius * Math.cos(orb.phi), target.z + orb.radius * sp * Math.cos(orb.theta));
+        function stepCamera(now) {
+            const idle = now - orb.lastInteract, hovering = hoverIdx !== -1;
+            const wantAuto = !reduced && !orb.dragging && !hovering && idle > CFG.autoResumeMs;
+            orb.autoSpeed += ((wantAuto ? AUTO : 0) - orb.autoSpeed) * 0.03;   // ease the spin in / out
+            orb.autoAngle += orb.autoSpeed;
+            if (!orb.dragging) {                  // inertia after a fling
+                orb.mtTheta += orb.vTheta; orb.tPhi += orb.vPhi;
+                orb.vTheta *= CFG.friction; orb.vPhi *= CFG.friction;
+                if (Math.abs(orb.vTheta) < 1e-5) orb.vTheta = 0;
+                if (Math.abs(orb.vPhi) < 1e-5) orb.vPhi = 0;
+            }
+            const cA = clamp(orb.mtTheta, -clampAz, clampAz); if (cA !== orb.mtTheta) orb.vTheta = 0; orb.mtTheta = cA;
+            const cP = clamp(orb.tPhi, pMin, pMax); if (cP !== orb.tPhi) orb.vPhi = 0; orb.tPhi = cP;
+            const s = orb.dragging ? 0.3 : 0.08;  // snappier while dragging, silky on settle
+            orb.mTheta += (orb.mtTheta - orb.mTheta) * s;
+            orb.phi += (orb.tPhi - orb.phi) * s;
+            const theta = orb.autoAngle + orb.mTheta, sp = Math.sin(orb.phi);
+            camera.position.set(
+                target.x + orb.radius * sp * Math.sin(theta),
+                target.y + orb.radius * Math.cos(orb.phi),
+                target.z + orb.radius * sp * Math.cos(theta));
             camera.lookAt(target);
         }
 
-        // --- interaction (drag orbit; NO wheel handler so the page scrolls) ---
-        const el = renderer.domElement;
+        // --- pointer: drag to look around (inertia), hover for detail, click to route ---
+        const el = renderer.domElement; el.style.cursor = 'grab';
         let last = null;
-        el.addEventListener('pointerdown', (e) => { orb.auto = false; orb.dragging = true; last = { x: e.clientX, y: e.clientY }; el.setPointerCapture(e.pointerId); });
-        el.addEventListener('pointerup', (e) => { orb.dragging = false; last = null; });
+        el.addEventListener('pointerdown', (e) => {
+            orb.dragging = true; orb.lastInteract = performance.now(); orb.vTheta = orb.vPhi = 0;
+            last = { x: e.clientX, y: e.clientY, moved: 0 };
+            el.setPointerCapture(e.pointerId); el.style.cursor = 'grabbing'; setHover(-1);
+        });
+        el.addEventListener('pointerup', () => { orb.dragging = false; el.style.cursor = 'grab'; });
         el.addEventListener('pointermove', (e) => {
             if (orb.dragging && last) {
-                orb.tTheta -= (e.clientX - last.x) * 0.005; orb.theta = orb.tTheta;
-                orb.tPhi -= (e.clientY - last.y) * 0.005; orb.phi = Math.max(CFG.polarMinDeg * DEG, Math.min(CFG.polarMaxDeg * DEG, orb.tPhi));
-                last = { x: e.clientX, y: e.clientY };
+                const dx = e.clientX - last.x, dy = e.clientY - last.y;
+                orb.mtTheta -= dx * CFG.dragSpeed; orb.tPhi -= dy * CFG.dragSpeed;
+                orb.vTheta = -dx * CFG.dragSpeed * 0.6; orb.vPhi = -dy * CFG.dragSpeed * 0.6;   // fling
+                orb.lastInteract = performance.now();
+                last = { x: e.clientX, y: e.clientY, moved: last.moved + Math.abs(dx) + Math.abs(dy) };
             } else { hover(e.clientX, e.clientY); }
         });
-        el.addEventListener('pointerleave', () => setHover(-1));
-        el.addEventListener('click', () => { const t = hoverIdx; if (t === 'c') route('view-forge'); else if (t >= 0) route(ARCS[t].id); });
+        el.addEventListener('pointerleave', () => { if (!orb.dragging) setHover(-1); });
+        el.addEventListener('click', () => {
+            if (last && last.moved > 6) return;   // was a drag, not a click
+            if (hoverIdx === 'c') route(CENTER.id);
+            else if (typeof hoverIdx === 'number' && hoverIdx >= 0) route(ARCS[hoverIdx].id);
+        });
         function route(id) { if (window.openDetail) window.openDetail(id); }
 
-        // hover picking
+        // --- hover picking ---
         const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-        let hoverIdx = -1;
         function hover(cx, cy) {
             const r = el.getBoundingClientRect();
             ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
             ray.setFromCamera(ndc, camera);
             const hit = ray.intersectObjects(pick, false)[0];
-            if (!hit) return setHover(-1);
-            setHover(hit.object.userData.route ? 'c' : hit.object.userData.arc);
+            setHover(!hit ? -1 : (hit.object.userData.route ? 'c' : hit.object.userData.arc));
         }
         function setHover(idx) {
             if (idx === hoverIdx) return; hoverIdx = idx;
-            arcs.forEach((a, i) => {
-                const on = i === idx;
-                a.mat.emissiveIntensity = on ? 0.5 : (idx === -1 || idx === 'c' ? 0.18 : 0.1);
-                a.group.position.y = on ? 0.1 : 0;
-            });
-            el.style.cursor = idx === -1 ? 'grab' : 'pointer';
-            if (typeof idx === 'number' && idx >= 0) showLabel(arcs[idx]); else label.classList.remove('show');
+            const dim = idx !== -1 && idx !== 'c';
+            arcs.forEach((a, i) => { a.hovered = i === idx; a.dimmed = dim && i !== idx; });
+            if (!orb.dragging) el.style.cursor = idx === -1 ? 'grab' : 'pointer';
+            if (idx === 'c') showLabel(CENTER, true, null);
+            else if (typeof idx === 'number' && idx >= 0) showLabel(arcs[idx].cfg, false, arcs[idx]);
+            else { label.classList.remove('show'); label._anchor = null; }
         }
-        function showLabel(a) {
-            const val = a.cfg.valueSel ? (document.querySelector(a.cfg.valueSel)?.textContent || '') : '';
-            label.innerHTML = `<div class="hl-eyebrow">${a.cfg.idx} · ${a.cfg.eyebrow}</div>`
-                + `<div class="hl-title">${a.cfg.title}</div>`
-                + (val ? `<div class="hl-value">${val}</div>` : '')
-                + `<div class="hl-link">Open →</div>`;
-            label.classList.add('show');
-            a._labelAnchor = new THREE.Vector3(Math.cos(a.group.rotation.y) * 3.9, 0.5, Math.sin(a.group.rotation.y) * 3.9);
+        function showLabel(cfg, isCenter, arc) {
+            const val = cfg.valueSel ? (document.querySelector(cfg.valueSel)?.textContent || '') : '';
+            label.style.setProperty('--acc', HEX[ACCENTS[cfg.accent]]);
+            label.innerHTML =
+                `<div class="hl-eyebrow">${cfg.idx} · ${cfg.eyebrow.toUpperCase()}</div>` +
+                `<div class="hl-title">${cfg.title}</div>` +
+                `<div class="hl-desc">${cfg.desc}</div>` +
+                (val ? `<div class="hl-value">${val}</div>` : '') +
+                `<div class="hl-link">Open →</div>`;
+            label.classList.remove('show'); void label.offsetWidth; label.classList.add('show'); // retrigger pop
+            label._anchor = isCenter
+                ? new THREE.Vector3(0, pTop + 2.0, 0)
+                : new THREE.Vector3(Math.cos(arc.group.rotation.y) * 3.95, 0.55, Math.sin(arc.group.rotation.y) * 3.95);
         }
 
         // --- resize ---
@@ -224,37 +266,50 @@
         if (window.ResizeObserver) new ResizeObserver(resize).observe(host);
         requestAnimationFrame(resize);
 
-        // --- mount animation ---
-        let t0 = performance.now();
-        arcs.forEach((a) => { a.reveal = reduced ? 1 : 0; });
-        const autoStep = (Math.PI * 2) / (CFG.autoRotateSecs * 60);
+        // --- mount + per-frame animation state ---
+        const t0 = performance.now();
+        arcs.forEach((a) => { a.reveal = reduced ? 1 : 0; a.lift = 0; a.emph = 0; });
         const _v = new THREE.Vector3();
+        const emAmberBase = emAmber.emissiveIntensity;
+        let centerLift = 0, emAmberEase = emAmberBase;
 
         function frame() {
             requestAnimationFrame(frame);
             const home = document.getElementById('home-view');
             if (document.hidden || (home && home.classList.contains('dim'))) return; // pause when a detail view is open
+            const now = performance.now();
 
-            if (orb.auto) orb.theta += autoStep;
-            applyCam();
+            stepCamera(now);
 
-            // staggered mount reveal
-            if (!reduced) {
-                const el0 = performance.now() - t0;
-                arcs.forEach((a, i) => {
-                    const p = Math.max(0, Math.min(1, (el0 - i * 90) / 500));
-                    a.reveal += (p - a.reveal) * 0.2;
-                    a.group.scale.setScalar(0.9 + a.reveal * 0.1);
-                    a.group.visible = a.reveal > 0.01;
-                });
-            }
+            // arcs: staggered mount + eased hover lift / emphasis / dim
+            const el0 = now - t0;
+            arcs.forEach((a, i) => {
+                if (!reduced) { const p = clamp((el0 - i * 90) / 520, 0, 1); a.reveal += (p - a.reveal) * 0.2; a.group.visible = a.reveal > 0.01; }
+                const tLift = a.hovered ? CFG.hoverLift : 0;
+                a.lift += (tLift - a.lift) * 0.18;
+                const tEmph = a.hovered ? 1 : (a.dimmed ? -1 : 0);
+                a.emph += (tEmph - a.emph) * 0.15;
+                a.mat.emissiveIntensity = Math.max(0.05, 0.2 + a.emph * 0.42);
+                a.group.position.y = a.lift;
+                const hoverScale = 1 + Math.max(a.emph, 0) * 0.045;
+                a.group.scale.setScalar((0.9 + a.reveal * 0.1) * hoverScale);
+            });
 
-            // position hover label
-            if (hoverIdx >= 0 && arcs[hoverIdx]._labelAnchor) {
-                _v.copy(arcs[hoverIdx]._labelAnchor).project(camera);
+            // centre Forge: lift + power-up glow on hover
+            const cHover = hoverIdx === 'c';
+            centerLift += ((cHover ? 0.14 : 0) - centerLift) * 0.14;
+            cardGroup.position.y = pTop + centerLift;
+            emAmberEase += ((cHover ? emAmberBase * 1.7 : emAmberBase) - emAmberEase) * 0.12;
+            emAmber.emissiveIntensity = emAmberEase;
+
+            // label follows its anchor smoothly (premium, no snapping)
+            if (label._anchor) {
+                _v.copy(label._anchor).project(camera);
                 const r = host.getBoundingClientRect();
-                label.style.left = (( _v.x * 0.5 + 0.5) * r.width) + 'px';
-                label.style.top = ((-_v.y * 0.5 + 0.5) * r.height) + 'px';
+                const tx = (_v.x * 0.5 + 0.5) * r.width, ty = (-_v.y * 0.5 + 0.5) * r.height;
+                if (!labelInit) { labelPx.x = tx; labelPx.y = ty; labelInit = true; }
+                labelPx.x += (tx - labelPx.x) * 0.3; labelPx.y += (ty - labelPx.y) * 0.3;
+                label.style.left = labelPx.x + 'px'; label.style.top = labelPx.y + 'px';
             }
             renderer.render(scene, camera);
         }
