@@ -121,6 +121,20 @@ body.hero3d-on .hero3d { display: block; }
     body.hero3d-on .card-grid { display: grid; }
     body.hero3d-on .hero3d { display: none; }
 }
+/* minimalist hero legend — bottom-right, exact card colours */
+.hero-legend {
+    position: absolute; right: clamp(14px, 2vw, 26px); bottom: clamp(14px, 2vh, 24px); z-index: 2;
+    pointer-events: none; display: flex; flex-direction: column; gap: 7px;
+    font-size: 11.5px; color: var(--ink-2); letter-spacing: 0.01em;
+}
+.hero-legend .lg-row { display: flex; align-items: center; gap: 9px; }
+.hero-legend .lg-sw { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
+.hero-legend .lg-bar { width: 11px; height: 11px; flex: 0 0 auto; display: inline-flex; align-items: flex-end; justify-content: space-between; }
+.hero-legend .lg-bar i { width: 2.5px; background: currentColor; border-radius: 1px; }
+.hero-legend .lg-bar i:nth-child(1) { height: 45%; }
+.hero-legend .lg-bar i:nth-child(2) { height: 100%; }
+.hero-legend .lg-bar i:nth-child(3) { height: 70%; }
+
 /* premium hover pop-up anchored above an arc / the centre card */
 .hero-label {
     --acc: #ffb020;

@@ -160,6 +160,17 @@
 
         // --- premium hover pop-up ---
         const label = document.createElement('div'); label.className = 'hero-label'; host.appendChild(label);
+
+        // --- minimalist legend (bottom-right): exact card colours + a bar-chart icon for the Forge ---
+        const LEGEND = [
+            [ARCS[0].accent, 'Budget'], [ARCS[1].accent, 'Investments'], [ARCS[2].accent, 'Bills'],
+            [ARCS[3].accent, 'AI Orchestrator'], [ARCS[4].accent, 'Agent Theatre'], [ARCS[5].accent, 'Scan'],
+        ];
+        const legend = document.createElement('div'); legend.className = 'hero-legend';
+        legend.innerHTML = LEGEND.map(([c, t]) =>
+            `<div class="lg-row"><span class="lg-sw" style="background:${toHex(c)}"></span>${t}</div>`).join('')
+            + `<div class="lg-row"><span class="lg-bar" style="color:${toHex(CENTER.accent)}"><i></i><i></i><i></i></span>The Forge</div>`;
+        host.appendChild(legend);
         let hoverIdx = -1;                        // -1 none, 'c' centre, 0..n an arc
         const labelPx = { x: 0, y: 0 }; let labelInit = false;
 
