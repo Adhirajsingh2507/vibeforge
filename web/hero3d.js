@@ -217,8 +217,9 @@
             } else { hover(e.clientX, e.clientY); }
         });
         el.addEventListener('pointerleave', () => { if (!orb.dragging) setHover(-1); });
-        el.addEventListener('click', () => {
+        el.addEventListener('click', (e) => {
             if (last && last.moved > 6) return;   // was a drag, not a click
+            hover(e.clientX, e.clientY);          // fresh pick at the click point (pointerdown cleared hover)
             if (hoverIdx === 'c') route(CENTER.id);
             else if (typeof hoverIdx === 'number' && hoverIdx >= 0) route(ARCS[hoverIdx].id);
         });
