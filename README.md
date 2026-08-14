@@ -15,6 +15,18 @@ deterministic math**, never hallucinated numbers.
 
 </div>
 
+## Screenshots
+
+The home screen — your whole financial system as an interactive 3D arc-reactor, one colour per area:
+
+![Finora home — 3D arc-reactor hero](docs/screenshots/01-hero.png)
+
+| **Agent Theatre** — the live multi-agent reasoning, staged from the real trace | **The Forge** — every rupee as a 3D Tetris tower |
+|---|---|
+| ![Agent Theatre](docs/screenshots/04-agents.png) | ![The Forge](docs/screenshots/03-forge.png) |
+| **AI Orchestrator** — chat with the multi-agent CFO | **Budget** — dashboard + transaction ledger |
+| ![AI chat](docs/screenshots/06-chat.png) | ![Budget dashboard](docs/screenshots/05-budget.png) |
+
 ---
 
 ## Why it's different
