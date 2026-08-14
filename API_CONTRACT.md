@@ -1,4 +1,4 @@
-# Vibeforge Backend — API Contract
+# Finora — API Contract
 
 Base URL (dev): `http://localhost:8000`. All bodies are JSON. CORS is open to
 `*`. Validation errors return **422** with a `detail` array naming the bad
@@ -42,11 +42,15 @@ Ask the multi-agent CFO a question. This is the main event.
 
 Request:
 ```json
-{ "query": "Can I afford a 90000 iPhone?", "session_id": null }
+{ "query": "Can I afford a 90000 iPhone?", "context_token": null }
 ```
 - `query`: 1–500 chars (required).
-- `session_id`: pass one from `POST /conversation/new` for multi-turn memory, or
-  `null` for a one-shot.
+- `context_token`: **stateless multi-turn memory.** Pass `null` on the first
+  turn; on every response you get back a fresh `context_token` — send it on the
+  next `/advise` and follow-ups ("why?", "what if 50k?") resolve against the real
+  prior findings. The token is HMAC-signed and carries only safe execution
+  metadata; it survives serverless cold-starts (no server session store). The
+  legacy `session_id` field is still accepted but the token is the mechanism.
 
 Response (`Advice`):
 ```json
@@ -57,19 +61,28 @@ Response (`Advice`):
   "findings": [ { "agent": "…", "summary": "…" } ],
   "judge_verdict": { … } | null,
   "iterations": 1,
-  "session_id": null,
   "intent": "DECISION",
   "gemma_calls": 0,
-  "timings": { … }
+  "timings": { … },
+  "context_token": "…"        // save it, replay it on the next /advise
 }
 ```
-Render `answer` as the reply; render `trace`/`findings` as an "how the agents
+Render `answer` as the reply; render `trace`/`findings` as a "how the agents
 worked" panel. Note: the model's hidden reasoning is **never** in the response by
 design.
 
-### Conversation sessions (optional, for multi-turn)
-- `POST /conversation/new` → `{ "session_id": "…" }`
-- `POST /conversation/{session_id}/clear` → `{ "cleared": "…" }`
+### `POST /scan` — document → importable rows
+Multipart upload (`file`). Extracts transactions & bills from a bill/statement so
+they can be reviewed and imported via the CRUD endpoints below. Max 20 MB.
+Digital/text PDFs work on the default (text) LLM; images need a vision provider
+(see README → Deploy).
+```json
+{ "transactions": [ { "date": "YYYY-MM-DD", "merchant": "…", "category": "…", "amount": 0 } ],
+  "bills":        [ { "name": "…", "due_date": "YYYY-MM-DD", "amount": 0, "autopay": false } ],
+  "note": "Found 3 transaction(s) and 2 bill(s)." }
+```
+Extracted rows are validated against the same schemas as manual entry. On a hard
+failure (no key, unreadable image) you get `{ "error": "…", "transactions": [], "bills": [] }`.
 
 ---
 
