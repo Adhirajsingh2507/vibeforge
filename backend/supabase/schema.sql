@@ -7,7 +7,7 @@ create table if not exists tiles (
   x            int  not null,
   y            int  not null,
   z            real not null default 0,
-  terrain_class text not null,
+  "class"      text not null,   -- matches the frozen API contract key exactly
   slope        real not null,
   safety_score real not null,
   zone         smallint not null check (zone between 0 and 3),

@@ -1,8 +1,4 @@
+# API service (this is what Vercel installs — keep it lean).
 fastapi>=0.110
 uvicorn[standard]>=0.29
-numpy>=1.26
-opencv-python-headless>=4.9
-# torch / segmentation_models_pytorch added when the model lands (heavy)
-
-# supabase persistence (optional; falls back to mock JSON if unset)
 supabase>=2.4

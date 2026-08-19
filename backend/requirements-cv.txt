@@ -1,0 +1,5 @@
+# Offline / on-rover perception pipeline — NOT installed on Vercel.
+# Install locally: pip install -r requirements.txt -r requirements-cv.txt
+numpy>=1.26
+opencv-python-headless>=4.9
+# torch, segmentation_models_pytorch, onnxruntime added when the model lands (heavy)

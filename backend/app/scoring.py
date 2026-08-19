@@ -54,14 +54,20 @@ def safety_score(c: Cell) -> float:
 
 def zone(c: Cell) -> int:
     """0 safe, 1 nav, 2 geological, 3 hazard. Precedence: hazard>geo>nav>safe."""
-    if c.slope_deg >= SLOPE_MAX_DEG or c.terrain_class in ("crater", "rock") \
-            and c.roughness >= ROUGH_MAX or c.crater_dist_m < CRATER_MARGIN_M:
+    # Zone 3 — hazard, highest precedence. Parenthesized so intent is explicit.
+    if (c.slope_deg >= SLOPE_MAX_DEG
+            or c.crater_dist_m < CRATER_MARGIN_M
+            or c.terrain_class == "crater"                       # a crater is always hazard
+            or (c.terrain_class == "rock" and c.roughness >= ROUGH_MAX)):  # boulder
         return 3
-    if c.terrain_class == "waterbed" or c.terrain_class == "mineral_edge":
+    # Zone 2 — geological interest.
+    if c.terrain_class in ("waterbed", "mineral_edge"):
         return 2
-    if safety_score(c) >= SAFE_THRESHOLD and c.conf >= CONF_MIN_BUILD \
-            and c.terrain_class in ("compact_soil", "soil"):
+    # Zone 0 — construction-safe. Needs a confident buildable class AND score.
+    if (safety_score(c) >= SAFE_THRESHOLD and c.conf >= CONF_MIN_BUILD
+            and c.terrain_class in ("compact_soil", "soil")):
         return 0
+    # Zone 1 — navigation-only (default for anything drivable but not buildable).
     return 1
 
 
@@ -70,14 +76,27 @@ def _demo():
     rim = Cell(30, 0.4, "crater", 0.5)
     loose = Cell(6, 0.1, "loose_soil", 8)
     uncertain = Cell(3, 0.02, "compact_soil", 10, conf=0.2)
+    smooth_crater = Cell(4, 0.03, "crater", 12)   # flat-looking crater floor, far from a rim
+    boulder = Cell(5, 0.5, "rock", 9)             # big rough rock = hazard
+    small_rock = Cell(5, 0.1, "rock", 9)          # small rock = drivable
+    waterbed = Cell(3, 0.02, "waterbed", 10)      # geological
+    steep_waterbed = Cell(30, 0.5, "waterbed", 9) # hazard beats geological (precedence)
+    shadow = Cell(3, 0.02, "shadow", 10)          # unknown-ish, never buildable
 
     assert safety_score(flat) > 0.85, safety_score(flat)
     assert zone(flat) == 0
     assert zone(rim) == 3
-    assert zone(loose) == 1                       # drivable, not buildable
+    assert zone(loose) == 1                        # drivable, not buildable
     # low-confidence class must NOT get promoted to Zone 0
     assert zone(uncertain) == 1, zone(uncertain)
     assert safety_score(uncertain) < safety_score(flat)
+    # crater is always hazard even when it looks smooth
+    assert zone(smooth_crater) == 3, zone(smooth_crater)
+    assert zone(boulder) == 3, zone(boulder)
+    assert zone(small_rock) == 1, zone(small_rock)
+    assert zone(waterbed) == 2, zone(waterbed)
+    assert zone(steep_waterbed) == 3, zone(steep_waterbed)   # precedence: hazard > geological
+    assert zone(shadow) == 1, zone(shadow)         # drivable-with-caution, not buildable
     print("scoring self-check ok")
 
 
