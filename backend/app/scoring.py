@@ -18,9 +18,12 @@ CONF_MIN_BUILD = 0.5      # need this class confidence to ever call it buildable
 # how much each factor counts toward the score
 W_SLOPE, W_ROUGH, W_CLASS, W_CRATER = 0.35, 0.25, 0.20, 0.20
 
-# per-class bearing weight (1.0 = ideal build surface)
+# per-class bearing weight (1.0 = ideal build surface). Covers the full
+# segmentation taxonomy so no known class silently uses the .get() default.
+# waterbed/mineral_edge are geological (Zone 2) — protected, never built on.
 CLASS_BEARING = {"compact_soil": 1.0, "soil": 0.6, "loose_soil": 0.3,
-                 "rock": 0.2, "shadow": 0.0, "crater": 0.0, "unknown": 0.4}
+                 "rock": 0.2, "shadow": 0.0, "crater": 0.0,
+                 "waterbed": 0.1, "mineral_edge": 0.1, "unknown": 0.4}
 
 
 @dataclass
@@ -97,6 +100,10 @@ def _demo():
     assert zone(waterbed) == 2, zone(waterbed)
     assert zone(steep_waterbed) == 3, zone(steep_waterbed)   # precedence: hazard > geological
     assert zone(shadow) == 1, zone(shadow)         # drivable-with-caution, not buildable
+    # every segmentation class has an explicit bearing weight (no silent default)
+    taxonomy = {"compact_soil", "soil", "loose_soil", "rock", "crater",
+                "shadow", "waterbed", "mineral_edge", "unknown"}
+    assert taxonomy <= set(CLASS_BEARING), taxonomy - set(CLASS_BEARING)
     print("scoring self-check ok")
 
 

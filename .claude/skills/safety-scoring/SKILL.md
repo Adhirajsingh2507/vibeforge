@@ -27,7 +27,7 @@ when the class label is uncertain.
 | 0 | Construction-safe (flat, compact, high bearing) |
 | 1 | Navigation-only (drivable, unsafe to build) |
 | 2 | Geological interest (waterbed, mineral_edge) |
-| 3 | Hazardous (crater rim / margin, steep slope, rough rock) |
+| 3 | Hazardous (crater class always, crater margin, steep slope, boulder-rough rock) |
 
 ## Constraints
 

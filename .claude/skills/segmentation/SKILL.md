@@ -17,7 +17,8 @@ updating `backend/app/scoring.py`:
 
 - `CLASS_BEARING` in `scoring.py` weights build viability by class.
 - `waterbed` / `mineral_edge` drive Zone 2 (geological interest).
-- `crater` / `rock` drive Zone 3 with roughness.
+- `crater` always drives Zone 3 (a crater is hazard even when its floor looks
+  smooth); `rock` drives Zone 3 only when boulder-rough (`roughness >= ROUGH_MAX`).
 
 ## Constraints
 
