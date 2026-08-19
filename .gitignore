@@ -1,0 +1,24 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# node
+node_modules/
+.next/
+out/
+.vercel/
+
+# data / models (keep repo light)
+*.pth
+*.onnx
+*.ckpt
+data/raw/
+*.mp4
+
+# env / os
+.env
+.env.local
+.DS_Store

@@ -1,0 +1,7 @@
+[
+  {"x":0,"y":0,"z":0.0,"class":"compact_soil","slope":3.1,"safety_score":0.9,"zone":0},
+  {"x":1,"y":0,"z":0.1,"class":"soil","slope":6.4,"safety_score":0.74,"zone":0},
+  {"x":2,"y":0,"z":0.4,"class":"loose_soil","slope":9.2,"safety_score":0.55,"zone":1},
+  {"x":3,"y":0,"z":1.6,"class":"crater","slope":31.0,"safety_score":0.08,"zone":3},
+  {"x":4,"y":0,"z":0.2,"class":"mineral_edge","slope":4.0,"safety_score":0.6,"zone":2}
+]

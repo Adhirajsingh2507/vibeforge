@@ -1,0 +1,4 @@
+[
+  {"id":"S1","x":0,"y":0,"safety_score":0.9,"rank":1},
+  {"id":"S2","x":1,"y":0,"safety_score":0.74,"rank":2}
+]
