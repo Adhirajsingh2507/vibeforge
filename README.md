@@ -43,3 +43,14 @@ the mock for the live FastAPI endpoints.
 | 3 | Hazardous (crater rims, slopes, boulders) |
 
 Precedence when signals conflict: **hazard > geological > navigation > safe**.
+
+## Supabase (persistence)
+
+Terrain products (tiles, sites, boundaries, rover path) persist in Supabase
+Postgres. Schema + RLS: `backend/supabase/schema.sql` (public read for the
+dashboard; backend writes via service_role).
+
+- **MCP:** `.mcp.json` registers the Supabase MCP server — reload the session and
+  complete the OAuth flow to expose Supabase tools.
+- **Backend:** set `SUPABASE_URL` + `SUPABASE_KEY` (service role) — see
+  `backend/.env.example`. Unset = falls back to `backend/mock/*.json`.
