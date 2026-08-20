@@ -1,0 +1,5 @@
+SYNTHETIC PLACEHOLDER — not a real image.
+scene: mars_scene_0 (Mars analog, train split), camera: right
+No real stereo capture exists for this dataset yet; this file establishes the
+manifest path explicitly rather than fabricating pixel data. Replace with a
+real rectified right-eye frame when a Mars-analog dataset lands (see backend/data/README.md).

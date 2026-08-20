@@ -24,18 +24,16 @@ Owner legend: `backend-agent` · `perception-agent` · `stereo-depth-agent` · `
 - [x] Service-role key stays backend-only (verified: no frontend refs, gate greps for committed key) — `database-agent`
 - [x] Contract-shape check backend vs mock (`tests/test_contract.py`, wired into gate) — `testing-agent`
 
-## Phase 2 — Perception Pipeline (measurements only)
-**Vertical slice ✅ landed (P0+P1):** stub pipeline runs end-to-end `scene_0 → tiles`,
-all 4 zones, no false-safe, served through the frozen contract. Deepen each stub in
-P2–P5 — see `docs/implementation-plan.md`.
-Legend: `[~]` stub landed via the slice · `[ ]` real implementation pending.
+## Phase 2 — Perception Pipeline (measurements only) ✅
+End-to-end pipeline `scene → tiles`, all 4 zones, no false-safe, served through the
+frozen contract. Every stage has a real implementation behind the frozen internal
+handoffs — see `docs/implementation-plan.md` (P0–P5).
 - [x] Per-pixel segmentation + confidence — real classical HSV + opponent-colour classifier w/ texture gate (P3) — `perception-agent`
 - [x] Stereo calibration + disparity → metric depth — real `cv2.StereoSGBM`, calibration as data, `cv2` lazy-gated (P2) — `stereo-depth-agent`
 - [x] Per-cell slope + roughness (`derive_geometry`, fed by real stereo or height grid) — `stereo-depth-agent`
-- [ ] Pose estimation + drift + multi-frame fusion (P4) — `slam-mapping-agent`
-- [~] Single-frame fusion → grid + `rover_path` (placeholder path) — `slam-mapping-agent`
-- [~] Per-cell descriptors + computed crater-distance — `terrain-intelligence-agent`
-- [~] Boundary polyline extraction (coordinate-sort; real tracing P5) — `terrain-intelligence-agent`
+- [x] Pose estimation + drift + multi-frame fusion → world grid + real `rover_path` w/ degradation ladder (P4) — `slam-mapping-agent`
+- [x] Per-cell descriptors + computed crater-distance — `terrain-intelligence-agent`
+- [x] Boundary polyline extraction — real adjacency/border tracing (P5) — `terrain-intelligence-agent`
 
 ## Phase 3 — Safety Scoring & Zones (decision layer) ✅
 - [x] Deterministic `scoring.py`: descriptors → safety_score [0,1] + zone 0–3 — `terrain-intelligence-agent`
@@ -45,10 +43,10 @@ Legend: `[~]` stub landed via the slice · `[ ]` real implementation pending.
 - [x] Input guards for NaN / out-of-range (`guards.py`) — `terrain-intelligence-agent`
 - [x] Verify measurement↔decision boundary holds (assembly never calls `zone()`/`safety_score()`) — `architecture-guardian`
 
-## Phase 4 — Dataset & Evaluation
-- [ ] Ingest/convert simulated stereo+RGB + terrain labels — `dataset-agent`
-- [ ] Per-dataset calibration params (seg/depth/scoring depend on) — `dataset-agent`
-- [ ] Train/eval splits + label format — `dataset-agent`
+## Phase 4 — Dataset & Evaluation *(dataset ✅, eval pending)*
+- [x] Ingestion path `backend/data/` — manifest + label format + synthetic scenes (real imagery pending) — `dataset-agent`
+- [x] Per-dataset calibration params `calibration/{lunar,mars}.json` (match `Calibration` fields) — `dataset-agent`
+- [x] Train/eval splits (split-by-scene) + `validate_dataset.py` leakage guard — `dataset-agent`
 - [ ] Metrics: seg IoU, depth error, zone/safety agreement vs GT — `testing-agent`
 
 ## Phase 5 — Edge / On-Rover Optimization
@@ -56,11 +54,8 @@ Legend: `[~]` stub landed via the slice · `[ ]` real implementation pending.
 - [ ] Latency / memory / power budgeting — `edge-ai-agent`
 - [ ] Backbone choices for rover-class compute — `edge-ai-agent`
 
-## Phase 6 — Frontend (Next.js + TS + Tailwind)
-- [ ] Map tile viewer + zone overlay — `claude` (UI)
-- [ ] Rover path + site/boundary rendering — `claude` (UI)
-- [ ] Consume only the frozen contract — `backend-agent` (contract) / `claude` (UI)
-- [ ] Responsive + accessible pass — `claude` (UI)
+## Phase 6 — Frontend
+_Owned by a teammate — out of scope for this repo's agent workflow._
 
 ## Phase 7 — Testing & QA
 - [x] Scoring + stage self-check demos (`__main__` in scoring/segment/depth/fuse/terrain) — `testing-agent`

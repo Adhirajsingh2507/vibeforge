@@ -134,7 +134,16 @@ classify correctly. numpy only (torch stays out).
 - **Risks:** overconfident output → false-safe promotion; Earth-trained domain gap. *Mitigate:* conf cap; scoring degrades low conf toward 0.4; geometry path still works when class is uncertain.
 - **Acceptance:** valid class+conf map for the fixture; replaces the seg stub; safety regression still holds against pipeline output.
 
-## P4 — SLAM / multi-frame fusion
+## P4 — SLAM / multi-frame fusion — ✅ DONE
+
+*Delivered:* `slam/pose.py` (translation-only frame registration via height-SSD;
+confidence = sharpness × coverage; optional odometry/IMU blend), `slam/fuse.py`
+`fuse_sequence` (confidence-weighted upsert into one world grid, NaN never
+overwrites good geometry) + `rover_path_from_poses` (real path with full →
+cautious → survey-only → safe-hold ladder), fixture `scene_seq_0`. `fuse_single`
+/`placeholder_path` preserved (pipeline stays single-frame). Rotation + real
+image sequences are future work.
+
 
 - **Files:** `backend/app/slam/pose.py`, `backend/app/slam/fuse.py`.
 - **Dependencies:** P2 + P3 (needs per-frame depth+seg to fuse).
@@ -144,7 +153,14 @@ classify correctly. numpy only (torch stays out).
 - **Risks:** drift on featureless regolith → warped grid → mislocated hazards. *Mitigate:* fuse IMU/odometry, flag low-trust regions, degrade via `guards` (`mode` drops to cautious/survey).
 - **Acceptance:** multi-frame fixture fuses to grid + path; P1 single-frame passthrough still valid.
 
-## P5 — Terrain assembly deepening
+## P5 — Terrain assembly deepening — ✅ DONE
+
+*Delivered:* `terrain/assemble.py` `extract_boundaries` now traces real region
+borders (rim-cell filter + nearest-neighbour adjacency walk) instead of
+coordinate-sort; `crater_dist_m` unchanged. A runnable assertion proves assembly
+never calls `zone()`/`safety_score()` (measurement↔decision boundary). O(n²)
+greedy scan — fine per-scene; ceiling documented inline.
+
 
 - **Files:** `backend/app/terrain/assemble.py`, `backend/app/terrain/boundaries.py`.
 - **Dependencies:** P1 (built minimally there), P4 (real fused grid).
@@ -154,7 +170,14 @@ classify correctly. numpy only (torch stays out).
 - **Risks:** crater-distance miscompute → wrong keep-out → false-safe near a rim. *Mitigate:* known-answer tests; conservative default (no rim detected near a crater cell → treat as close).
 - **Acceptance:** replaces hand-authored `boundaries.json`; `crater_dist` computed not literal; contract shapes hold.
 
-## P6 — Dataset ingestion + calibration
+## P6 — Dataset ingestion + calibration — ✅ DONE (synthetic)
+
+*Delivered:* `backend/data/` — `manifest.json` (split-by-scene), label format
+(9-class), `calibration/{lunar,mars}.json` (match `Calibration` fields),
+`validate_dataset.py` (paths exist, labels in taxonomy, no split leakage,
+calibration complete — with a self-test firing every failure mode). Scenes are
+documented synthetic placeholders until real stereo imagery lands.
+
 
 - **Files:** `backend/data/` (new home — currently unassigned), `manifest.json` (scene→split→label/pair paths), `calibration/{lunar,mars}.json`, `backend/data/validate_dataset.py`.
 - **Dependencies:** P0 (formats), consumed by P2.
@@ -169,7 +192,7 @@ classify correctly. numpy only (torch stays out).
 - **Persistence:** `pipeline.py` upserts to Supabase via existing `db.upsert` instead of only writing mock. *Test:* mock-fallback path unchanged when env unset. *Risk:* service-role key exposure — backend-only.
 - **Evaluation:** seg IoU / depth error / end-to-end zone-&-safety agreement vs ground truth. *Acceptance:* metrics reproducible on the P6 eval split.
 - **Edge-AI:** quantize/latency-budget once a trained model lands (after P3 deepens). *Risk:* rad-hard CPU budget.
-- **Frontend:** consume `/map/tiles`, `/rover/path`, `/sites`, `/boundaries` into the 3D map (phases.md Phase 6).
+- **Frontend:** owned by a teammate — out of scope for this repo's agent workflow.
 - **Deploy:** Docker + CI (phases.md Phase 8).
 
 ---

@@ -1,0 +1,9 @@
+{
+  "_comment": "SYNTHETIC per-cell terrain-class labels for lunar_scene_0. Classes must be exactly the 9-class taxonomy (see backend/data/README.md / app.scoring.CLASS_BEARING).",
+  "scene_id": "lunar_scene_0",
+  "labels": [
+    ["compact_soil", "soil", "loose_soil"],
+    ["soil", "rock", "shadow"],
+    ["compact_soil", "soil", "compact_soil"]
+  ]
+}

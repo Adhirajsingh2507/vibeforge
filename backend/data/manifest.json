@@ -1,0 +1,49 @@
+{
+  "_comment": "TerraSight dataset manifest. Paths are relative to backend/data/. All scene, stereo, and label content in this manifest is SYNTHETIC placeholder data (no real lunar/Mars-analog captures exist yet) \u2014 see README.md. Split is by scene, never by frame.",
+  "entries": [
+    {
+      "scene_id": "lunar_scene_0",
+      "dataset": "lunar",
+      "split": "train",
+      "stereo": {
+        "left": "scenes/lunar_scene_0/left.txt",
+        "right": "scenes/lunar_scene_0/right.txt"
+      },
+      "labels": "scenes/lunar_scene_0/labels.json",
+      "calibration": "calibration/lunar.json"
+    },
+    {
+      "scene_id": "lunar_scene_1",
+      "dataset": "lunar",
+      "split": "val",
+      "stereo": {
+        "left": "scenes/lunar_scene_1/left.txt",
+        "right": "scenes/lunar_scene_1/right.txt"
+      },
+      "labels": "scenes/lunar_scene_1/labels.json",
+      "calibration": "calibration/lunar.json"
+    },
+    {
+      "scene_id": "mars_scene_0",
+      "dataset": "mars",
+      "split": "train",
+      "stereo": {
+        "left": "scenes/mars_scene_0/left.txt",
+        "right": "scenes/mars_scene_0/right.txt"
+      },
+      "labels": "scenes/mars_scene_0/labels.json",
+      "calibration": "calibration/mars.json"
+    },
+    {
+      "scene_id": "mars_scene_1",
+      "dataset": "mars",
+      "split": "test",
+      "stereo": {
+        "left": "scenes/mars_scene_1/left.txt",
+        "right": "scenes/mars_scene_1/right.txt"
+      },
+      "labels": "scenes/mars_scene_1/labels.json",
+      "calibration": "calibration/mars.json"
+    }
+  ]
+}
