@@ -26,6 +26,14 @@ step "Scoring self-check"
 step "Safety regression suite"
 ( cd "$BACKEND" && "$PY" tests/test_safety_regression.py )
 
+# --------------------------------------------------- Perception pipeline (P0/P1)
+step "Pipeline stage self-checks"
+( cd "$BACKEND" && for m in app.perception.segment app.depth.pipeline \
+    app.slam.fuse app.terrain.assemble; do "$PY" -m "$m"; done )
+
+step "Fixture + end-to-end pipeline"
+( cd "$BACKEND" && "$PY" tests/test_fixtures.py && "$PY" tests/test_pipeline.py )
+
 # ---------------------------------------------------------- API contract tests
 step "API contract shape check"
 ( cd "$BACKEND" && "$PY" tests/test_contract.py )
