@@ -23,6 +23,9 @@ step "Backend import check"
 step "Scoring self-check"
 ( cd "$BACKEND" && "$PY" -m app.scoring )
 
+step "Safety regression suite"
+( cd "$BACKEND" && "$PY" tests/test_safety_regression.py )
+
 # ---------------------------------------------------------- API contract tests
 step "API contract shape check"
 ( cd "$BACKEND" && "$PY" - <<'PY'
