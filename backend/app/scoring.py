@@ -5,6 +5,7 @@ crater-distance) still works even when the class label is uncertain. Class only
 gates the *final* zone, never the geometric score.
 """
 from __future__ import annotations
+import math
 from dataclasses import dataclass
 
 # tuning knobs — calibrate per dataset (lunar regolith != mars analog)
@@ -36,7 +37,10 @@ class Cell:
 
 
 def _lin(x: float, lo: float, hi: float) -> float:
-    """1.0 at/below lo, 0.0 at/above hi, linear between. Clamped."""
+    """1.0 at/below lo, 0.0 at/above hi, linear between. Clamped.
+    Non-finite input (missing depth -> NaN) scores 0.0, never full credit."""
+    if not math.isfinite(x):
+        return 0.0
     if hi <= lo:
         return 1.0 if x <= lo else 0.0
     return max(0.0, min(1.0, (hi - x) / (hi - lo)))
@@ -46,8 +50,9 @@ def safety_score(c: Cell) -> float:
     """Weighted construction viability in [0, 1]. Geometry-driven."""
     slope_f = _lin(c.slope_deg, SLOPE_SAFE_DEG, SLOPE_MAX_DEG)
     rough_f = _lin(c.roughness, 0.05, ROUGH_MAX)
-    crater_f = 1.0 if c.crater_dist_m >= CRATER_MARGIN_M else \
-        c.crater_dist_m / CRATER_MARGIN_M
+    crater_f = 0.0 if not math.isfinite(c.crater_dist_m) else (
+        1.0 if c.crater_dist_m >= CRATER_MARGIN_M
+        else c.crater_dist_m / CRATER_MARGIN_M)
     class_f = CLASS_BEARING.get(c.terrain_class, 0.4)
     # low-confidence class shrinks toward neutral 0.4 so it can't force Zone 0
     class_f = 0.4 + (class_f - 0.4) * c.conf
@@ -66,8 +71,10 @@ def zone(c: Cell) -> int:
     # Zone 2 — geological interest.
     if c.terrain_class in ("waterbed", "mineral_edge"):
         return 2
-    # Zone 0 — construction-safe. Needs a confident buildable class AND score.
+    # Zone 0 — construction-safe. Needs a confident buildable class AND score
+    # AND sub-threshold roughness (rough ground is never a foundation).
     if (safety_score(c) >= SAFE_THRESHOLD and c.conf >= CONF_MIN_BUILD
+            and c.roughness < ROUGH_MAX
             and c.terrain_class in ("compact_soil", "soil")):
         return 0
     # Zone 1 — navigation-only (default for anything drivable but not buildable).
