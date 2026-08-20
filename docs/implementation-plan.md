@@ -98,7 +98,15 @@ Replace `gen_mock.py`'s hand-literals with a **real pipeline** over the fixture:
 - **Risks:** stubs hiding integration bugs; an overconfident stub `conf` creating a false-safe. *Mitigate:* stubs emit conservative `conf`, NaN where unknown; safety regression gates the output.
 - **Acceptance:** `python -m app.pipeline --scene scene_0` writes contract-valid mock; `validate-terrasight.sh` green; `test_pipeline.py` passes. This is the demoable thread: image-shaped input → served zones.
 
-## P2 — Depth stage (real geometry)
+## P2 — Depth stage (real geometry) — ✅ DONE
+
+*Delivered:* `depth/calibration.py` (`Calibration` dataclass — rig + SGBM knobs as
+data), `depth/stereo.py` (`disparity` via `cv2.StereoSGBM`, `disparity_to_depth`
+with NaN on invalid, `stereo_geometry` reusing `derive_geometry`). `cv2` lazy —
+module loads without opencv; synthetic tilted-plane self-check recovers slope
+within 3° when cv2 present, NaN-guard always runs. Real per-dataset calibration
+values come from P6.
+
 
 - **Files:** `backend/app/depth/calibration.py`, `backend/app/depth/pipeline.py`.
 - **Dependencies:** P1 interfaces. Real calibration values come from P6, but synthetic self-checks unblock now.
@@ -108,7 +116,15 @@ Replace `gen_mock.py`'s hand-literals with a **real pipeline** over the fixture:
 - **Risks:** wrong calibration → wrong slope → **false-safe**. *Mitigate:* calibration is data not code; known-answer tests; strict NaN discipline (scoring already scores NaN as 0).
 - **Acceptance:** SGBM disparity→depth→slope/roughness within tolerance on synthetic pair; drops into `pipeline.py` replacing the depth stub.
 
-## P3 — Perception stage (segmentation)
+## P3 — Perception stage (segmentation) — ✅ DONE
+
+*Delivered:* `perception/segment.py` upgraded from nearest-RGB stub to a real
+classical classifier — HSV + luminance + opponent-colour features vs. class
+centroids, margin-based conservative conf (cap 0.6), pure-black→`shadow`,
+far→`unknown`, plus a numpy local-texture gate that only *demotes* ambiguous
+cells. `classify`/`segment` signatures unchanged; `scene_0` known cells still
+classify correctly. numpy only (torch stays out).
+
 
 - **Files:** `backend/app/perception/preprocess.py`, `backend/app/perception/segment.py`.
 - **Dependencies:** P1. Pipeline entry point (no upstream).

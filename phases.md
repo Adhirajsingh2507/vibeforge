@@ -29,9 +29,9 @@ Owner legend: `backend-agent` · `perception-agent` · `stereo-depth-agent` · `
 all 4 zones, no false-safe, served through the frozen contract. Deepen each stub in
 P2–P5 — see `docs/implementation-plan.md`.
 Legend: `[~]` stub landed via the slice · `[ ]` real implementation pending.
-- [~] RGB preprocessing + per-pixel segmentation + confidence (classical nearest-colour stub) — `perception-agent`
-- [ ] Stereo calibration + disparity → metric depth (P2, real SGBM) — `stereo-depth-agent`
-- [~] Per-cell slope + roughness (from height grid; real stereo in P2) — `stereo-depth-agent`
+- [x] Per-pixel segmentation + confidence — real classical HSV + opponent-colour classifier w/ texture gate (P3) — `perception-agent`
+- [x] Stereo calibration + disparity → metric depth — real `cv2.StereoSGBM`, calibration as data, `cv2` lazy-gated (P2) — `stereo-depth-agent`
+- [x] Per-cell slope + roughness (`derive_geometry`, fed by real stereo or height grid) — `stereo-depth-agent`
 - [ ] Pose estimation + drift + multi-frame fusion (P4) — `slam-mapping-agent`
 - [~] Single-frame fusion → grid + `rover_path` (placeholder path) — `slam-mapping-agent`
 - [~] Per-cell descriptors + computed crater-distance — `terrain-intelligence-agent`

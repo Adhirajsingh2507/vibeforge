@@ -29,7 +29,7 @@ step "Safety regression suite"
 # --------------------------------------------------- Perception pipeline (P0/P1)
 step "Pipeline stage self-checks"
 ( cd "$BACKEND" && for m in app.perception.segment app.depth.pipeline \
-    app.slam.fuse app.terrain.assemble; do "$PY" -m "$m"; done )
+    app.depth.stereo app.slam.fuse app.terrain.assemble; do "$PY" -m "$m"; done )
 
 step "Fixture + end-to-end pipeline"
 ( cd "$BACKEND" && "$PY" tests/test_fixtures.py && "$PY" tests/test_pipeline.py )
