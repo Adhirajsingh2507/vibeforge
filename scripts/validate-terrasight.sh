@@ -29,10 +29,14 @@ step "Safety regression suite"
 # --------------------------------------------------- Perception pipeline (P0/P1)
 step "Pipeline stage self-checks"
 ( cd "$BACKEND" && for m in app.perception.segment app.depth.pipeline \
-    app.depth.stereo app.slam.fuse app.terrain.assemble; do "$PY" -m "$m"; done )
+    app.depth.stereo app.slam.pose app.slam.fuse app.slam.fixture_check \
+    app.terrain.assemble; do "$PY" -m "$m"; done )
 
 step "Fixture + end-to-end pipeline"
 ( cd "$BACKEND" && "$PY" tests/test_fixtures.py && "$PY" tests/test_pipeline.py )
+
+step "Dataset ingestion validator"
+( cd "$BACKEND" && "$PY" data/validate_dataset.py )
 
 # ---------------------------------------------------------- API contract tests
 step "API contract shape check"

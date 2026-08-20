@@ -1,0 +1,5 @@
+SYNTHETIC PLACEHOLDER — not a real image.
+scene: lunar_scene_1 (lunar regolith, val split), camera: left
+No real stereo capture exists for this dataset yet; this file establishes the
+manifest path explicitly rather than fabricating pixel data. Replace with a
+real rectified left-eye frame when a lunar dataset lands (see backend/data/README.md).

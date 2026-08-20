@@ -1,0 +1,15 @@
+{
+  "_comment": "Mars-analog rover rig. SYNTHETIC values for a wider-baseline rig tuned for dustier atmosphere, lower-contrast texture, and longer traverse range. Fields match app.depth.calibration.Calibration exactly.",
+  "baseline_m": 0.20,
+  "focal_px": 760.0,
+  "cx": 320.0,
+  "cy": 240.0,
+  "min_disparity": 0,
+  "num_disparities": 128,
+  "block_size": 7,
+  "uniqueness_ratio": 8,
+  "speckle_window_size": 200,
+  "speckle_range": 4,
+  "disp12_max_diff": 2,
+  "min_valid_disparity_px": 1.0
+}

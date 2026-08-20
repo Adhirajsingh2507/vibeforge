@@ -1,0 +1,9 @@
+{
+  "_comment": "SYNTHETIC per-cell terrain-class labels for mars_scene_1. Classes must be exactly the 9-class taxonomy (see backend/data/README.md / app.scoring.CLASS_BEARING).",
+  "scene_id": "mars_scene_1",
+  "labels": [
+    ["rock", "crater", "shadow"],
+    ["soil", "compact_soil", "unknown"],
+    ["mineral_edge", "waterbed", "rock"]
+  ]
+}
