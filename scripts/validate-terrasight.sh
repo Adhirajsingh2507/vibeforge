@@ -38,6 +38,9 @@ step "Fixture + end-to-end pipeline"
 step "Dataset ingestion validator"
 ( cd "$BACKEND" && "$PY" data/validate_dataset.py )
 
+step "Evaluation metrics self-check"
+( cd "$BACKEND" && "$PY" -m app.eval.metrics )
+
 # ---------------------------------------------------------- API contract tests
 step "API contract shape check"
 ( cd "$BACKEND" && "$PY" tests/test_contract.py )

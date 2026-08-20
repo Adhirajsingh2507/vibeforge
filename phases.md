@@ -43,11 +43,11 @@ handoffs — see `docs/implementation-plan.md` (P0–P5).
 - [x] Input guards for NaN / out-of-range (`guards.py`) — `terrain-intelligence-agent`
 - [x] Verify measurement↔decision boundary holds (assembly never calls `zone()`/`safety_score()`) — `architecture-guardian`
 
-## Phase 4 — Dataset & Evaluation *(dataset ✅, eval pending)*
+## Phase 4 — Dataset & Evaluation ✅
 - [x] Ingestion path `backend/data/` — manifest + label format + synthetic scenes (real imagery pending) — `dataset-agent`
 - [x] Per-dataset calibration params `calibration/{lunar,mars}.json` (match `Calibration` fields) — `dataset-agent`
 - [x] Train/eval splits (split-by-scene) + `validate_dataset.py` leakage guard — `dataset-agent`
-- [ ] Metrics: seg IoU, depth error, zone/safety agreement vs GT — `testing-agent`
+- [x] Metrics `app/eval/metrics.py` — seg IoU/mIoU, depth MAE/RMSE, zone agreement, safety MAE, **false-safe rate** (headline) — `testing-agent`
 
 ## Phase 5 — Edge / On-Rover Optimization
 - [ ] Quantize + shrink seg/depth/SLAM models — `edge-ai-agent`
