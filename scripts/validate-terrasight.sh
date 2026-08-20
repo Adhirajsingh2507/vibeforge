@@ -28,33 +28,7 @@ step "Safety regression suite"
 
 # ---------------------------------------------------------- API contract tests
 step "API contract shape check"
-( cd "$BACKEND" && "$PY" - <<'PY'
-from app import main
-
-def keys(row, required, name):
-    missing = required - set(row)
-    assert not missing, f"{name} missing keys: {missing}"
-
-tiles = main.map_tiles()
-assert isinstance(tiles, list) and tiles, "tiles empty"
-keys(tiles[0], {"x", "y", "z", "class", "slope", "safety_score", "zone"}, "tiles")
-
-sites = main.sites()
-assert isinstance(sites, list) and sites, "sites empty"
-keys(sites[0], {"id", "x", "y", "safety_score", "rank"}, "sites")
-
-bounds = main.boundaries()
-assert isinstance(bounds, list) and bounds, "boundaries empty"
-keys(bounds[0], {"type", "polyline"}, "boundaries")
-
-path = main.rover_path()
-assert isinstance(path, list) and path, "rover_path empty"
-keys(path[0], {"t", "x", "y", "heading", "mode"}, "rover_path")
-
-assert main.health()["status"] == "ok"
-print("contract ok")
-PY
-)
+( cd "$BACKEND" && "$PY" tests/test_contract.py )
 
 # --------------------------------------------------------------- Frontend build
 if [ -f "$FRONTEND/package.json" ]; then
