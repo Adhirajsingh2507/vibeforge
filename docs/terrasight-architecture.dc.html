@@ -1,0 +1,592 @@
+<title>TerraSight Rover Architecture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    /* light — "sunlit regolith" */
+    --bg:        #ECE7DD;
+    --surface:   #F6F2EA;
+    --surface-2: #FFFFFF;
+    --ink:       #1B1E24;
+    --ink-soft:  #4C4E4F;
+    --ink-faint: #7C7A73;
+    --line:      #D6CFC0;
+    --line-soft: #E4DED2;
+    --accent:    #C0701A;   /* telemetry amber, deepened for light bg */
+    --accent-ink:#8A4E12;
+
+    /* zone semantics — stable across themes */
+    --z0:#2E9E6B;  --z0-bg:#2e9e6b22;
+    --z1:#3E7FC4;  --z1-bg:#3e7fc422;
+    --z2:#8B5CF6;  --z2-bg:#8b5cf622;
+    --z3:#D64541;  --z3-bg:#d6454122;
+
+    --radius:14px;
+    --maxw:1180px;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --display:'Sora',var(--sans);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #0A0D13;
+      --surface:   #11151E;
+      --surface-2: #161B26;
+      --ink:       #ECEAE3;
+      --ink-soft:  #B4B2AB;
+      --ink-faint: #7E8794;
+      --line:      #232A38;
+      --line-soft: #1A202C;
+      --accent:    #E8A33D;
+      --accent-ink:#F5C57A;
+      --z0-bg:#2e9e6b2e; --z1-bg:#3e7fc42e; --z2-bg:#8b5cf62e; --z3-bg:#d645412e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:        #0A0D13;
+    --surface:   #11151E;
+    --surface-2: #161B26;
+    --ink:       #ECEAE3;
+    --ink-soft:  #B4B2AB;
+    --ink-faint: #7E8794;
+    --line:      #232A38;
+    --line-soft: #1A202C;
+    --accent:    #E8A33D;
+    --accent-ink:#F5C57A;
+    --z0-bg:#2e9e6b2e; --z1-bg:#3e7fc42e; --z2-bg:#8b5cf62e; --z3-bg:#d645412e;
+  }
+
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+
+  /* ---------- hero ---------- */
+  header.hero {
+    position:relative; overflow:hidden;
+    border-bottom:1px solid var(--line);
+    background:
+      radial-gradient(120% 80% at 82% -10%, var(--accent) 0%, transparent 42%),
+      linear-gradient(180deg, var(--surface), var(--bg));
+  }
+  header.hero::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),
+                     linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+    background-size:44px 44px; opacity:.4;
+    mask-image:radial-gradient(80% 80% at 50% 0%,#000,transparent 75%);
+  }
+  .hero .wrap { position:relative; z-index:1; padding:66px 24px 58px; }
+  .eyebrow {
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--accent-ink);
+    display:flex; align-items:center; gap:10px; margin:0 0 20px;
+  }
+  .eyebrow::before{content:"";width:34px;height:1px;background:var(--accent);}
+  h1 {
+    font-family:var(--display); font-weight:800; letter-spacing:-.02em;
+    font-size:clamp(2.3rem,6vw,4.1rem); line-height:1.02; margin:0;
+    text-wrap:balance; max-width:15ch;
+  }
+  h1 .glow{ color:var(--accent-ink); }
+  .lede {
+    font-size:clamp(1.02rem,1.7vw,1.22rem); color:var(--ink-soft);
+    max-width:60ch; margin:22px 0 0;
+  }
+  .meta-row{ display:flex; flex-wrap:wrap; gap:10px; margin-top:30px; }
+  .chip {
+    font-family:var(--mono); font-size:.74rem; letter-spacing:.03em;
+    padding:7px 12px; border:1px solid var(--line); border-radius:999px;
+    background:var(--surface-2); color:var(--ink-soft);
+  }
+  .chip b{ color:var(--ink); font-weight:600; }
+
+  /* ---------- section scaffold ---------- */
+  section { padding:60px 0; border-bottom:1px solid var(--line-soft); }
+  .sec-head { margin:0 0 34px; }
+  .kicker {
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--ink-faint);
+  }
+  h2 {
+    font-family:var(--display); font-weight:700; letter-spacing:-.015em;
+    font-size:clamp(1.5rem,3vw,2.1rem); margin:.35em 0 0; text-wrap:balance;
+  }
+  h2 .num{ color:var(--accent-ink); font-variant-numeric:tabular-nums; }
+  .sec-head p { color:var(--ink-soft); max-width:66ch; margin:.7em 0 0; }
+  h3 {
+    font-family:var(--display); font-weight:600; font-size:1.12rem;
+    margin:0 0 .5em; letter-spacing:-.01em;
+  }
+
+  /* ---------- mermaid card ---------- */
+  .diagram {
+    background:#FBF8F1; border:1px solid var(--line);
+    border-radius:var(--radius); padding:22px; overflow-x:auto;
+    box-shadow:0 1px 0 var(--line-soft);
+  }
+  .diagram-cap {
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.05em;
+    color:var(--ink-faint); margin:12px 2px 0; text-transform:uppercase;
+  }
+  pre.mermaid{ margin:0; text-align:center; min-width:640px; }
+
+  /* ---------- zone legend ---------- */
+  .zones{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; }
+  .zone {
+    border:1px solid var(--line); border-radius:var(--radius);
+    background:var(--surface); padding:18px 18px 20px; position:relative;
+    overflow:hidden;
+  }
+  .zone::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--zc); }
+  .zone .tag{
+    font-family:var(--mono); font-size:.7rem; letter-spacing:.08em;
+    color:var(--zc); font-weight:600; text-transform:uppercase;
+    display:inline-block; padding:3px 9px; border-radius:6px;
+    background:var(--zbg); margin-bottom:12px;
+  }
+  .zone h3{ font-size:1.02rem; margin:0 0 6px; }
+  .zone p{ margin:0; font-size:.9rem; color:var(--ink-soft); }
+  .z0{--zc:var(--z0);--zbg:var(--z0-bg);}
+  .z1{--zc:var(--z1);--zbg:var(--z1-bg);}
+  .z2{--zc:var(--z2);--zbg:var(--z2-bg);}
+  .z3{--zc:var(--z3);--zbg:var(--z3-bg);}
+
+  /* ---------- status ---------- */
+  .status-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px; }
+  .stat{
+    border:1px solid var(--line); border-left:4px solid var(--sc);
+    border-radius:var(--radius); background:var(--surface); padding:20px 20px 22px;
+  }
+  .stat.done{ --sc:var(--z0); }
+  .stat.prog{ --sc:var(--accent); }
+  .stat.next{ --sc:var(--ink-faint); }
+  .stat-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .pill{
+    font-family:var(--mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase;
+    font-weight:600; color:var(--sc); padding:4px 10px; border-radius:6px;
+    background:color-mix(in srgb, var(--sc) 16%, transparent);
+  }
+  .pct{ font-family:var(--mono); font-size:.8rem; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .bar{ height:6px; border-radius:999px; background:var(--line); overflow:hidden; margin-bottom:16px; }
+  .bar i{ display:block; height:100%; border-radius:999px; background:var(--sc); }
+  .stat h3{ font-size:1.02rem; margin:0 0 6px; }
+  .stat p{ margin:0; font-size:.9rem; color:var(--ink-soft); }
+
+  /* ---------- cards / grid ---------- */
+  .grid2{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+  .card{
+    border:1px solid var(--line); border-radius:var(--radius);
+    background:var(--surface); padding:22px;
+  }
+  .card h3{ display:flex; align-items:center; gap:9px; }
+  .card .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); flex:none; }
+  .card ul{ margin:.4em 0 0; padding-left:1.1em; color:var(--ink-soft); font-size:.94rem; }
+  .card li{ margin:.3em 0; }
+  .card li b{ color:var(--ink); }
+
+  /* ---------- edge case table ---------- */
+  .tbl-scroll{ overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); }
+  table{ border-collapse:collapse; width:100%; min-width:760px; font-size:.9rem; }
+  thead th{
+    background:var(--surface-2); text-align:left; padding:13px 16px;
+    font-family:var(--mono); font-size:.7rem; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--ink-faint);
+    border-bottom:1px solid var(--line); position:sticky; top:0;
+  }
+  tbody td{ padding:14px 16px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--ink-soft); }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody td:first-child{ color:var(--ink); font-weight:600; width:24%; }
+  .sev{ font-family:var(--mono); font-size:.66rem; font-weight:600; padding:3px 8px; border-radius:5px; letter-spacing:.05em; white-space:nowrap; }
+  .sev.hi{ color:var(--z3); background:var(--z3-bg); }
+  .sev.md{ color:var(--accent-ink); background:var(--accent); background:color-mix(in srgb,var(--accent) 16%, transparent); }
+  .sev.lo{ color:var(--z1); background:var(--z1-bg); }
+
+  code{ font-family:var(--mono); font-size:.86em; background:color-mix(in srgb,var(--ink) 8%,transparent); padding:2px 6px; border-radius:5px; }
+
+  /* stack chips */
+  .stack{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
+  .layer{ border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:16px 18px; }
+  .layer .lbl{ font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--accent-ink); }
+  .layer .items{ margin-top:8px; font-size:.92rem; color:var(--ink); font-weight:500; }
+  .layer .items span{ color:var(--ink-faint); font-weight:400; }
+
+  /* ---------- references ---------- */
+  .refs{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+  .ref{
+    display:flex; flex-direction:column; gap:5px; text-decoration:none;
+    border:1px solid var(--line); border-radius:var(--radius);
+    background:var(--surface); padding:16px 18px; transition:border-color .18s, transform .18s;
+  }
+  .ref:hover{ border-color:var(--accent); transform:translateY(-2px); }
+  .ref:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .rlbl{ font-family:var(--mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--accent-ink); }
+  .rname{ font-family:var(--display); font-weight:600; font-size:1rem; color:var(--ink); letter-spacing:-.01em; }
+  .rurl{ font-family:var(--mono); font-size:.74rem; color:var(--ink-faint); }
+  @media (prefers-reduced-motion:reduce){ .ref:hover{ transform:none; } }
+
+  footer{ padding:40px 0 60px; }
+  footer p{ font-family:var(--mono); font-size:.76rem; color:var(--ink-faint); margin:0; }
+
+  @media (max-width:600px){
+    .hero .wrap{ padding:48px 20px 44px; }
+    section{ padding:44px 0; }
+  }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">SIH · Space Technology · CV / Robotics</p>
+    <h1>TerraSight — the <span class="glow">eyes &amp; brain</span> of an autonomous rover</h1>
+    <p class="lede">An onboard Edge-AI perception stack that turns raw stereo + RGB camera feeds into a live 3D terrain map,
+      classifies every patch of ground into actionable zones, and scores it for construction — without waiting on Earth.</p>
+    <div class="meta-row">
+      <span class="chip"><b>Latency killer:</b> decisions made onboard, not 40 min round-trip</span>
+      <span class="chip"><b>Core:</b> Semantic Segmentation + V-SLAM</span>
+      <span class="chip"><b>Runs on:</b> quantized model, rad-hard CPU budget</span>
+    </div>
+  </div>
+</header>
+
+<section id="zones">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">The output that matters</span>
+      <h2><span class="num">01</span> — Four zones the rover reasons about</h2>
+      <p>Instead of streaming video for a human to interpret, TerraSight labels the world into four decision classes. Every downstream module — navigation, mission planning, the Earth dashboard — consumes these labels.</p>
+    </div>
+    <div class="zones">
+      <div class="zone z0"><span class="tag">Zone 0</span><h3>Construction-safe</h3><p>Flat, compacted regolith, high bearing capacity, sub-threshold slope. Cleared for habitats, pads &amp; arrays.</p></div>
+      <div class="zone z1"><span class="tag">Zone 1</span><h3>Navigation only</h3><p>Uneven or loose soil — safe to drive across, unsafe to build on. Path-planner may traverse, planner won't site.</p></div>
+      <div class="zone z2"><span class="tag">Zone 2</span><h3>Geological interest</h3><p>Ancient water beds, ice deposits, mineral boundaries. Flagged for science, protected from disturbance.</p></div>
+      <div class="zone z3"><span class="tag">Zone 3</span><h3>Hazardous</h3><p>Crater rims, steep slopes, large boulders. Hard no-go — the planner routes around it.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="status">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Where we are right now</span>
+      <h2><span class="num">02</span> — Product status</h2>
+      <p>Honest build state for the judges: the perception spine works on simulated data, the decision layer is mid-build, and integration is the next sprint.</p>
+    </div>
+    <div class="status-grid">
+      <div class="stat done">
+        <div class="stat-top"><span class="pill">Functional</span><span class="pct">100%</span></div>
+        <div class="bar"><i style="width:100%"></i></div>
+        <h3>Core segmentation &amp; mapping</h3>
+        <p>Segmentation + depth pipeline running end-to-end on simulated planetary datasets.</p>
+      </div>
+      <div class="stat prog">
+        <div class="stat-top"><span class="pill">In progress</span><span class="pct">~55%</span></div>
+        <div class="bar"><i style="width:55%"></i></div>
+        <h3>Zone classification &amp; Safety Score</h3>
+        <p>Rules engine mapping fused terrain → zones and a per-patch construction Safety Score.</p>
+      </div>
+      <div class="stat next">
+        <div class="stat-top"><span class="pill">Next phase</span><span class="pct">Queued</span></div>
+        <div class="bar"><i style="width:12%"></i></div>
+        <h3>Dashboard &amp; depth calibration</h3>
+        <p>Live 3D dashboard integration + depth-map calibration across additional planetary datasets.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="system">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Depth 1 · the whole system</span>
+      <h2><span class="num">03</span> — End-to-end architecture</h2>
+      <p>Two physically separated halves. Everything above the dashed line runs on the rover's compute, on a power and latency budget. Only compressed, high-value products cross the link to Earth.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'fontFamily':'IBM Plex Sans, sans-serif','fontSize':'13px','primaryColor':'#E3EAF1','primaryBorderColor':'#4A5C70','primaryTextColor':'#16202B','lineColor':'#7A6E58','edgeLabelBackground':'#FBF8F1','tertiaryColor':'#E3EAF1','clusterBkg':'#EFE7D6','clusterBorder':'#B79A6A','titleColor':'#8A4E12','nodeTextColor':'#16202B'}}}%%
+flowchart TB
+  subgraph ROVER["🛰  ONBOARD EDGE (rover)"]
+    direction TB
+    CAM["Stereo + RGB cameras<br/>IMU · sun sensor"]
+    ING["Ingestion &amp; sync<br/>rectify · debayer · timestamp"]
+    subgraph PERC["Perception core"]
+      SEG["Semantic segmentation<br/>quantized U-Net"]
+      DEPTH["Stereo depth<br/>disparity → point cloud"]
+      SLAM["Visual SLAM<br/>pose + 3D map"]
+    end
+    FUSE["Terrain fusion<br/>slope · roughness · class raster"]
+    SCORE["Construction scoring<br/>rules engine → safety score"]
+    NAV["Local planner<br/>hazard avoidance"]
+    PACK["Downlink packer<br/>tile + delta + priority"]
+    CAM --> ING --> SEG & DEPTH
+    DEPTH --> SLAM
+    SEG --> FUSE
+    DEPTH --> FUSE
+    SLAM --> FUSE
+    FUSE --> SCORE
+    FUSE --> NAV
+    SCORE --> PACK
+    SLAM --> PACK
+  end
+  PACK -. "high-latency, low-bandwidth link" .-> GS
+  subgraph EARTH["🌍  EARTH — mission dashboard"]
+    direction TB
+    GS["Ground station ingest<br/>FastAPI"]
+    STORE["Supabase (Postgres)<br/>tiles · sites · boundaries"]
+    UI["3D web portal<br/>React · Three.js"]
+    GS --> STORE --> UI
+  end
+</pre>
+    </div>
+    <p class="diagram-cap">Fig 2 — the rover closes its own perception→decision loop; Earth receives products, not raw sensors.</p>
+  </div>
+</section>
+
+<section id="cv">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Depth 2 · the perception core</span>
+      <h2><span class="num">04</span> — From pixels to a classified 3D map</h2>
+      <p>The hard part. A single frame is turned into (a) a per-pixel class raster and (b) a metric point cloud, then fused into a slope/roughness map registered to the SLAM pose graph.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'fontFamily':'IBM Plex Sans, sans-serif','fontSize':'13px','primaryColor':'#E3EAF1','primaryBorderColor':'#4A5C70','primaryTextColor':'#16202B','lineColor':'#7A6E58','edgeLabelBackground':'#FBF8F1','tertiaryColor':'#E3EAF1','clusterBkg':'#EFE7D6','clusterBorder':'#B79A6A','titleColor':'#8A4E12','nodeTextColor':'#16202B'}}}%%
+flowchart LR
+  L["Left cam"] --> R1["Rectify"]
+  R["Right cam"] --> R2["Rectify"]
+  R1 --> SEG["U-Net segmentation<br/>rock · soil · crater · shadow"]
+  R1 --> M["Stereo match<br/>SGBM / disparity"]
+  R2 --> M
+  M --> PC["Depth map<br/>→ point cloud"]
+  SEG --> CLS["Class raster"]
+  PC --> GEO["Per-cell geometry<br/>slope θ · roughness σ"]
+  CLS --> Z{"Zone rules"}
+  GEO --> Z
+  Z -->|"flat + compact + θ&lt;t"| Z0["Zone 0"]
+  Z -->|"drivable, loose"| Z1["Zone 1"]
+  Z -->|"gradient / mineral edge"| Z2["Zone 2"]
+  Z -->|"θ&gt;max / boulder / rim"| Z3["Zone 3"]
+  classDef z0 fill:#2E9E6B,stroke:#1f6f4b,color:#fff;
+  classDef z1 fill:#3E7FC4,stroke:#2c5c90,color:#fff;
+  classDef z2 fill:#8B5CF6,stroke:#6a40c8,color:#fff;
+  classDef z3 fill:#D64541,stroke:#a3302d,color:#fff;
+  class Z0 z0; class Z1 z1; class Z2 z2; class Z3 z3;
+</pre>
+    </div>
+    <p class="diagram-cap">Fig 3 — segmentation answers "what is it", stereo answers "where &amp; how steep"; zones need both.</p>
+
+    <div class="grid2" style="margin-top:26px">
+      <div class="card">
+        <h3><span class="dot"></span>Why segmentation <em>and</em> depth</h3>
+        <ul>
+          <li><b>Class alone is ambiguous:</b> flat-looking regolith on a 25° slope is still Zone 3.</li>
+          <li><b>Depth alone is blind to material:</b> a flat ice sheet reads as buildable but is Zone 2.</li>
+          <li><b>Fusion resolves it:</b> a cell is Zone 0 only when class = compact soil <em>and</em> slope &lt; threshold <em>and</em> distance-to-crater &gt; margin.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>Detecting the "limits of soil"</h3>
+        <ul>
+          <li><b>Sharp depth gradient</b> along a boundary → crater rim / cliff edge.</li>
+          <li><b>Texture + albedo discontinuity</b> with low slope → dried liquid bed / mineral edge (Zone 2).</li>
+          <li>Boundaries are vectorized and sent as polylines, cheap to transmit vs. raster.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="scoring">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Depth 3 · autonomous decisions</span>
+      <h2><span class="num">05</span> — Site scoring &amp; the navigation loop</h2>
+      <p>The rules engine converts fused terrain into a single <code>safety_score ∈ [0,1]</code> per candidate patch, while the local planner uses the same map to keep the rover alive in real time.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'fontFamily':'IBM Plex Sans, sans-serif','fontSize':'13px','primaryColor':'#E3EAF1','primaryBorderColor':'#4A5C70','primaryTextColor':'#16202B','lineColor':'#7A6E58','edgeLabelBackground':'#FBF8F1','tertiaryColor':'#E3EAF1','clusterBkg':'#EFE7D6','clusterBorder':'#B79A6A','titleColor':'#8A4E12','nodeTextColor':'#16202B'}}}%%
+flowchart TB
+  MAP["Fused terrain map"] --> S1["Slope penalty"]
+  MAP --> S2["Roughness penalty"]
+  MAP --> S3["Bearing / class weight"]
+  MAP --> S4["Crater-distance margin"]
+  S1 & S2 & S3 & S4 --> AGG["Weighted score<br/>Σ wᵢ·fᵢ → 0..1"]
+  AGG --> DEC{"score ≥ τ ?"}
+  DEC -->|yes| SAFE["Candidate site<br/>rank &amp; queue for downlink"]
+  DEC -->|no| REJ["Reject / re-survey"]
+  MAP --> PLAN["Local path planner"]
+  PLAN --> OBS{"Zone 3 ahead?"}
+  OBS -->|yes| REROUTE["Re-plan around hazard"]
+  OBS -->|no| DRIVE["Proceed on path"]
+  REROUTE --> DRIVE
+  classDef ok fill:#2E9E6B,stroke:#1f6f4b,color:#fff;
+  classDef bad fill:#D64541,stroke:#a3302d,color:#fff;
+  class SAFE,DRIVE ok; class REJ,REROUTE bad;
+</pre>
+    </div>
+    <p class="diagram-cap">Fig 4 — one shared terrain map feeds both the slow science loop (scoring) and the fast survival loop (planning).</p>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Buildable in 36 hours</span>
+      <h2><span class="num">06</span> — Hackathon tech stack &amp; scope</h2>
+      <p>Rover feeds are simulated from open planetary datasets (NASA Perseverance raw images, lunar analogs). SLAM is approximated from depth maps where a full pipeline is out of scope — the demo stays honest and runnable.</p>
+    </div>
+    <div class="stack">
+      <div class="layer"><div class="lbl">Data / sim</div><div class="items">NASA raw imagery <span>· lunar analog sets · stereo pairs replayed as a feed</span></div></div>
+      <div class="layer"><div class="lbl">CV &amp; AI</div><div class="items">PyTorch · OpenCV <span>· U-Net segmentation · SGBM depth</span></div></div>
+      <div class="layer"><div class="lbl">Mapping</div><div class="items">Depth→cloud <span>· optional ROS 2 for rover motion sim</span></div></div>
+      <div class="layer"><div class="lbl">Backend</div><div class="items">FastAPI <span>· serves tiles, scores, coordinates</span></div></div>
+      <div class="layer"><div class="lbl">Persistence</div><div class="items">Supabase Postgres <span>· RLS public read · service-role writes</span></div></div>
+      <div class="layer"><div class="lbl">Frontend</div><div class="items">React · Three.js <span>· 3D map, rover path, color-coded zones</span></div></div>
+      <div class="layer"><div class="lbl">Edge realism</div><div class="items">INT8 quantization <span>· contrast augmentation · latency budget</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="edge">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">What the judges will probe</span>
+      <h2><span class="num">07</span> — Edge cases &amp; their solutions</h2>
+      <p>Space is physically hostile to camera-based AI. Naming these — with a concrete mitigation for each — is what separates a demo from a mission concept.</p>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr><th>Edge case</th><th>Sev</th><th>Why it breaks a naive system</th><th>TerraSight mitigation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Pitch-black shadows &amp; blinding sun</td>
+            <td><span class="sev hi">HIGH</span></td>
+            <td>No atmospheric scatter → zero-info shadows and blown highlights fool the segmenter into false rock/hole calls.</td>
+            <td>Extreme contrast + gamma augmentation in training; treat pure-black regions as <em>unknown</em>, not hazard; HDR-style tone mapping at ingest.</td>
+          </tr>
+          <tr>
+            <td>Rad-hard CPU is slow &amp; power-limited</td>
+            <td><span class="sev hi">HIGH</span></td>
+            <td>Full-precision U-Net won't hit frame budget; drains battery.</td>
+            <td>INT8 quantization + pruning; run segmentation at reduced cadence, depth every frame; skip inference when scene is static (frame-diff gate).</td>
+          </tr>
+          <tr>
+            <td>Featureless terrain → SLAM drift</td>
+            <td><span class="sev hi">HIGH</span></td>
+            <td>Uniform regolith gives no visual features; pose estimate diverges, map warps.</td>
+            <td>Fuse IMU + wheel odometry with visual SLAM; drop confidence weight when feature count is low; flag map region as "low-trust".</td>
+          </tr>
+          <tr>
+            <td>Repetitive texture aliasing</td>
+            <td><span class="sev md">MED</span></td>
+            <td>Similar-looking rocks cause false loop closures / bad stereo matches.</td>
+            <td>Left-right consistency check on disparity; reject matches above ambiguity threshold; multi-scale features for loop closure.</td>
+          </tr>
+          <tr>
+            <td>Dust on lens / motion blur</td>
+            <td><span class="sev md">MED</span></td>
+            <td>Degraded frames silently poison the map with garbage geometry.</td>
+            <td>Per-frame quality gate (blur variance, exposure); drop bad frames; hold last-good map rather than overwrite.</td>
+          </tr>
+          <tr>
+            <td>Domain gap (Earth-trained model on alien soil)</td>
+            <td><span class="sev md">MED</span></td>
+            <td>Model trained on Mars analog underperforms on lunar regolith.</td>
+            <td>Rules layer is decoupled from the net — geometry (slope/depth) still works even if class is uncertain; class confidence gates the zone decision.</td>
+          </tr>
+          <tr>
+            <td>Downlink loss / partial transfer</td>
+            <td><span class="sev md">MED</span></td>
+            <td>Dropped packets corrupt the Earth map; bandwidth can't fit full raster.</td>
+            <td>Tile-based delta encoding with priority (hazards + high-score sites first); idempotent tiles; dashboard renders best-available, marks stale tiles.</td>
+          </tr>
+          <tr>
+            <td>Ambiguous / conflicting zone signals</td>
+            <td><span class="sev lo">LOW</span></td>
+            <td>Flat but loose, or class says soil while slope says hazard.</td>
+            <td>Conservative precedence: hazard &gt; geological &gt; nav &gt; safe. When in doubt, never label Zone 0.</td>
+          </tr>
+          <tr>
+            <td>Thermal / sensor timestamp skew</td>
+            <td><span class="sev lo">LOW</span></td>
+            <td>Unsynced stereo frames wreck disparity and pose.</td>
+            <td>Hardware-synced capture where possible; software timestamp matching with a max-skew reject window at ingest.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="failsafe">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">The safety invariant</span>
+      <h2><span class="num">08</span> — Degradation ladder</h2>
+      <p>When confidence drops, the rover degrades gracefully instead of guessing. Autonomy is safe only if it knows when to stop.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'fontFamily':'IBM Plex Mono, monospace','fontSize':'13px','primaryColor':'#E3EAF1','primaryBorderColor':'#4A5C70','primaryTextColor':'#16202B','lineColor':'#7A6E58','edgeLabelBackground':'#FBF8F1','tertiaryColor':'#E3EAF1','clusterBkg':'#EFE7D6','clusterBorder':'#B79A6A','titleColor':'#8A4E12','nodeTextColor':'#16202B'}}}%%
+flowchart LR
+  A["Full autonomy<br/>high confidence"] -->|"conf drops"| B["Cautious mode<br/>slow, wider hazard margin"]
+  B -->|"conf drops"| C["Survey-only<br/>stop driving, keep mapping"]
+  C -->|"conf drops"| D["Safe-hold<br/>halt · flag for Earth review"]
+  D -->|"conf recovers"| C
+  C -->|"conf recovers"| B
+  B -->|"conf recovers"| A
+  classDef ok fill:#2E9E6B,stroke:#1f6f4b,color:#fff;
+  classDef warn fill:#C0701A,stroke:#8A4E12,color:#fff;
+  classDef bad fill:#D64541,stroke:#a3302d,color:#fff;
+  class A ok; class B,C warn; class D bad;
+</pre>
+    </div>
+    <p class="diagram-cap">Fig 7 — a reversible ladder: the rover can always fall back to safe-hold and climb back up when trust returns.</p>
+  </div>
+</section>
+
+<section id="refs">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Standing on giants</span>
+      <h2><span class="num">09</span> — References</h2>
+      <p>One source per pillar — the full pipeline from data to dashboard, each defensible to judges.</p>
+    </div>
+    <div class="refs">
+      <a class="ref" href="https://data.nasa.gov" target="_blank" rel="noopener">
+        <span class="rlbl">Dataset · Training</span><span class="rname">AI4Mars — labeled Mars terrain</span><span class="rurl">data.nasa.gov ↗</span></a>
+      <a class="ref" href="https://mars.nasa.gov/mars2020/multimedia/raw-images/" target="_blank" rel="noopener">
+        <span class="rlbl">Dataset · Rover feed</span><span class="rname">NASA Perseverance raw stereo images</span><span class="rurl">mars.nasa.gov ↗</span></a>
+      <a class="ref" href="https://robotics.estec.esa.int/datasets/katwijk-beach-11-2015/" target="_blank" rel="noopener">
+        <span class="rlbl">Dataset · Analog</span><span class="rname">ESA Katwijk Beach rover set</span><span class="rurl">robotics.estec.esa.int ↗</span></a>
+      <a class="ref" href="https://arxiv.org/abs/1505.04597" target="_blank" rel="noopener">
+        <span class="rlbl">Model · Segmentation</span><span class="rname">U-Net (Ronneberger et al.)</span><span class="rurl">arxiv.org/abs/1505.04597 ↗</span></a>
+      <a class="ref" href="https://docs.opencv.org/4.x/dd/d53/tutorial_py_depthmap.html" target="_blank" rel="noopener">
+        <span class="rlbl">Vision · Depth</span><span class="rname">OpenCV StereoSGBM depth map</span><span class="rurl">docs.opencv.org ↗</span></a>
+      <a class="ref" href="https://github.com/UZ-SLAMLab/ORB_SLAM3" target="_blank" rel="noopener">
+        <span class="rlbl">Mapping · SLAM</span><span class="rname">ORB-SLAM3</span><span class="rurl">github.com/UZ-SLAMLab ↗</span></a>
+      <a class="ref" href="https://pytorch.org/docs/stable/quantization.html" target="_blank" rel="noopener">
+        <span class="rlbl">Edge AI · Deployment</span><span class="rname">PyTorch INT8 quantization</span><span class="rurl">pytorch.org ↗</span></a>
+      <a class="ref" href="https://threejs.org/" target="_blank" rel="noopener">
+        <span class="rlbl">Frontend · Dashboard</span><span class="rname">Three.js</span><span class="rurl">threejs.org ↗</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>TerraSight · SIH concept architecture · Zone precedence: hazard &gt; geological &gt; navigation &gt; construction-safe</p>
+  </div>
+</footer>

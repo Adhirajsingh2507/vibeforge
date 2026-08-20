@@ -13,7 +13,8 @@ Owner legend: `backend-agent` · `perception-agent` · `stereo-depth-agent` · `
 - [x] Supabase schema + mock-JSON fallback (`db.py`) — `database-agent`
 - [x] Validation gate `scripts/validate-terrasight.sh` — `testing-agent`
 - [x] Safety regression suite — `safety-agent`
-- [ ] Detailed arch docs `docs/architecture/SYSTEM.md` + `OWNERSHIP.md` (still prompt-stubs) — `architecture-guardian`
+- [x] Detailed arch docs `docs/architecture/SYSTEM.md` + `OWNERSHIP.md` — `architecture-guardian`
+- [x] Internal handoff contracts (`app/contracts.py`) + synthetic fixture `scene_0` (P0) — `dataset-agent`
 - [ ] Keep CLAUDE.md + skills in sync as phases land *(ongoing)* — `architecture-guardian`
 
 ## Phase 1 — API Contract & Backend Service ✅
@@ -24,23 +25,25 @@ Owner legend: `backend-agent` · `perception-agent` · `stereo-depth-agent` · `
 - [x] Contract-shape check backend vs mock (`tests/test_contract.py`, wired into gate) — `testing-agent`
 
 ## Phase 2 — Perception Pipeline (measurements only)
-- [ ] RGB preprocessing — `perception-agent`
-- [ ] Per-pixel segmentation + confidence (9-class taxonomy) — `perception-agent`
-- [ ] Stereo calibration + disparity matching — `stereo-depth-agent`
-- [ ] Disparity → metric depth — `stereo-depth-agent`
-- [ ] Per-cell slope + roughness — `stereo-depth-agent`
-- [ ] Pose estimation + drift correction — `slam-mapping-agent`
-- [ ] Fuse frames into one world-aligned grid + `rover_path` — `slam-mapping-agent`
-- [ ] Per-cell descriptors (class, slope, roughness, crater distance) — `terrain-intelligence-agent`
-- [ ] Boundary polyline extraction (crater rims, mineral/water edges) — `terrain-intelligence-agent`
+**Vertical slice ✅ landed (P0+P1):** stub pipeline runs end-to-end `scene_0 → tiles`,
+all 4 zones, no false-safe, served through the frozen contract. Deepen each stub in
+P2–P5 — see `docs/implementation-plan.md`.
+Legend: `[~]` stub landed via the slice · `[ ]` real implementation pending.
+- [~] RGB preprocessing + per-pixel segmentation + confidence (classical nearest-colour stub) — `perception-agent`
+- [ ] Stereo calibration + disparity → metric depth (P2, real SGBM) — `stereo-depth-agent`
+- [~] Per-cell slope + roughness (from height grid; real stereo in P2) — `stereo-depth-agent`
+- [ ] Pose estimation + drift + multi-frame fusion (P4) — `slam-mapping-agent`
+- [~] Single-frame fusion → grid + `rover_path` (placeholder path) — `slam-mapping-agent`
+- [~] Per-cell descriptors + computed crater-distance — `terrain-intelligence-agent`
+- [~] Boundary polyline extraction (coordinate-sort; real tracing P5) — `terrain-intelligence-agent`
 
-## Phase 3 — Safety Scoring & Zones (decision layer)
-- [ ] Deterministic `scoring.py`: descriptors → safety_score [0,1] + zone 0–3 — `terrain-intelligence-agent`
-- [ ] Zone precedence + thresholds + weights — `terrain-intelligence-agent`
-- [ ] Uncertain perception degrades to neutral, never forces buildable — `safety-agent`
-- [ ] No ML override of deterministic rules; no false-safe — `safety-agent`
-- [ ] Input guards for NaN / out-of-range (`guards.py`) — `terrain-intelligence-agent`
-- [ ] Verify measurement↔decision boundary holds — `architecture-guardian`
+## Phase 3 — Safety Scoring & Zones (decision layer) ✅
+- [x] Deterministic `scoring.py`: descriptors → safety_score [0,1] + zone 0–3 — `terrain-intelligence-agent`
+- [x] Zone precedence + thresholds + weights — `terrain-intelligence-agent`
+- [x] Uncertain perception degrades to neutral, never forces buildable — `safety-agent`
+- [x] No ML override of deterministic rules; no false-safe (locked by `test_safety_regression.py` + `test_pipeline.py`) — `safety-agent`
+- [x] Input guards for NaN / out-of-range (`guards.py`) — `terrain-intelligence-agent`
+- [x] Verify measurement↔decision boundary holds (assembly never calls `zone()`/`safety_score()`) — `architecture-guardian`
 
 ## Phase 4 — Dataset & Evaluation
 - [ ] Ingest/convert simulated stereo+RGB + terrain labels — `dataset-agent`
@@ -60,10 +63,11 @@ Owner legend: `backend-agent` · `perception-agent` · `stereo-depth-agent` · `
 - [ ] Responsive + accessible pass — `claude` (UI)
 
 ## Phase 7 — Testing & QA
-- [ ] Scoring self-check demos — `testing-agent`
-- [ ] Contract-shape checks (backend vs mock) — `testing-agent`
-- [ ] Mock-fallback path in `db.py` — `testing-agent`
-- [ ] Safety regression invariants in CI — `safety-agent`
+- [x] Scoring + stage self-check demos (`__main__` in scoring/segment/depth/fuse/terrain) — `testing-agent`
+- [x] Contract-shape checks (backend vs mock, `test_contract.py`) — `testing-agent`
+- [x] Fixture + end-to-end pipeline tests (`test_fixtures.py`, `test_pipeline.py`) — `testing-agent`
+- [ ] Dedicated mock-fallback path test in `db.py` — `testing-agent`
+- [ ] Safety regression invariants in **CI** (currently local gate only) — `safety-agent`
 
 ## Phase 8 — Deployment
 - [ ] Dockerfiles (frontend + FastAPI) — `devops-agent`

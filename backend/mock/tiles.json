@@ -2,64 +2,244 @@
   {
     "x": 0,
     "y": 0,
-    "z": 0.15,
+    "z": 0.2,
     "class": "compact_soil",
-    "slope": 3.1,
-    "safety_score": 1.0,
+    "slope": 0.51,
+    "safety_score": 0.952,
     "zone": 0
   },
   {
     "x": 1,
     "y": 0,
-    "z": 0.32,
-    "class": "soil",
-    "slope": 6.4,
-    "safety_score": 0.91,
+    "z": 0.21,
+    "class": "compact_soil",
+    "slope": 0.51,
+    "safety_score": 0.952,
     "zone": 0
   },
   {
     "x": 2,
     "y": 0,
-    "z": 0.46,
-    "class": "loose_soil",
-    "slope": 9.2,
-    "safety_score": 0.765,
-    "zone": 1
+    "z": 0.22,
+    "class": "soil",
+    "slope": 0.51,
+    "safety_score": 0.837,
+    "zone": 3
   },
   {
     "x": 3,
     "y": 0,
-    "z": 1.55,
-    "class": "crater",
-    "slope": 31.0,
-    "safety_score": 0.033,
+    "z": 0.22,
+    "class": "loose_soil",
+    "slope": 0.51,
+    "safety_score": 0.735,
     "zone": 3
   },
   {
     "x": 4,
     "y": 0,
-    "z": 0.2,
-    "class": "mineral_edge",
-    "slope": 4.0,
-    "safety_score": 0.82,
-    "zone": 2
+    "z": 0.23,
+    "class": "crater",
+    "slope": 0.51,
+    "safety_score": 0.632,
+    "zone": 3
   },
   {
     "x": 5,
     "y": 0,
-    "z": 0.25,
-    "class": "rock",
-    "slope": 5.0,
-    "safety_score": 0.59,
+    "z": 0.24,
+    "class": "loose_soil",
+    "slope": 0.51,
+    "safety_score": 0.735,
     "zone": 3
+  },
+  {
+    "x": 6,
+    "y": 0,
+    "z": 0.25,
+    "class": "soil",
+    "slope": 0.51,
+    "safety_score": 0.837,
+    "zone": 3
+  },
+  {
+    "x": 7,
+    "y": 0,
+    "z": 0.26,
+    "class": "mineral_edge",
+    "slope": 0.51,
+    "safety_score": 0.844,
+    "zone": 2
+  },
+  {
+    "x": 8,
+    "y": 0,
+    "z": 0.26,
+    "class": "loose_soil",
+    "slope": 0.51,
+    "safety_score": 0.868,
+    "zone": 1
+  },
+  {
+    "x": 0,
+    "y": 1,
+    "z": 0.2,
+    "class": "compact_soil",
+    "slope": 0.51,
+    "safety_score": 0.952,
+    "zone": 0
+  },
+  {
+    "x": 1,
+    "y": 1,
+    "z": 0.21,
+    "class": "compact_soil",
+    "slope": 0.51,
+    "safety_score": 0.952,
+    "zone": 0
   },
   {
     "x": 2,
     "y": 1,
-    "z": 0.15,
+    "z": 0.22,
+    "class": "soil",
+    "slope": 0.51,
+    "safety_score": 0.837,
+    "zone": 3
+  },
+  {
+    "x": 3,
+    "y": 1,
+    "z": 0.23,
+    "class": "loose_soil",
+    "slope": 0.51,
+    "safety_score": 0.735,
+    "zone": 3
+  },
+  {
+    "x": 4,
+    "y": 1,
+    "z": 0.24,
+    "class": "crater",
+    "slope": 0.51,
+    "safety_score": 0.632,
+    "zone": 3
+  },
+  {
+    "x": 5,
+    "y": 1,
+    "z": 0.24,
+    "class": "loose_soil",
+    "slope": 0.51,
+    "safety_score": 0.735,
+    "zone": 3
+  },
+  {
+    "x": 6,
+    "y": 1,
+    "z": 0.25,
+    "class": "soil",
+    "slope": 0.51,
+    "safety_score": 0.837,
+    "zone": 3
+  },
+  {
+    "x": 7,
+    "y": 1,
+    "z": 0.26,
+    "class": "mineral_edge",
+    "slope": 0.51,
+    "safety_score": 0.844,
+    "zone": 2
+  },
+  {
+    "x": 8,
+    "y": 1,
+    "z": 0.27,
+    "class": "rock",
+    "slope": 0.51,
+    "safety_score": 0.856,
+    "zone": 1
+  },
+  {
+    "x": 0,
+    "y": 2,
+    "z": 0.21,
     "class": "compact_soil",
-    "slope": 3.0,
-    "safety_score": 1.0,
+    "slope": 0.51,
+    "safety_score": 0.952,
     "zone": 0
+  },
+  {
+    "x": 1,
+    "y": 2,
+    "z": 0.22,
+    "class": "compact_soil",
+    "slope": 0.51,
+    "safety_score": 0.952,
+    "zone": 0
+  },
+  {
+    "x": 2,
+    "y": 2,
+    "z": 0.22,
+    "class": "soil",
+    "slope": 0.51,
+    "safety_score": 0.837,
+    "zone": 3
+  },
+  {
+    "x": 3,
+    "y": 2,
+    "z": 0.23,
+    "class": "loose_soil",
+    "slope": 0.51,
+    "safety_score": 0.735,
+    "zone": 3
+  },
+  {
+    "x": 4,
+    "y": 2,
+    "z": 0.24,
+    "class": "crater",
+    "slope": 0.51,
+    "safety_score": 0.632,
+    "zone": 3
+  },
+  {
+    "x": 5,
+    "y": 2,
+    "z": 0.25,
+    "class": "loose_soil",
+    "slope": 0.51,
+    "safety_score": 0.735,
+    "zone": 3
+  },
+  {
+    "x": 6,
+    "y": 2,
+    "z": 0.26,
+    "class": "soil",
+    "slope": 0.51,
+    "safety_score": 0.837,
+    "zone": 3
+  },
+  {
+    "x": 7,
+    "y": 2,
+    "z": 0.26,
+    "class": "mineral_edge",
+    "slope": 0.51,
+    "safety_score": 0.844,
+    "zone": 2
+  },
+  {
+    "x": 8,
+    "y": 2,
+    "z": 0.27,
+    "class": "shadow",
+    "slope": 0.51,
+    "safety_score": 0.832,
+    "zone": 1
   }
 ]

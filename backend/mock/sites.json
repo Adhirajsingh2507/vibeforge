@@ -3,21 +3,42 @@
     "id": "S1",
     "x": 0,
     "y": 0,
-    "safety_score": 1.0,
+    "safety_score": 0.952,
     "rank": 1
   },
   {
     "id": "S2",
-    "x": 2,
-    "y": 1,
-    "safety_score": 1.0,
+    "x": 1,
+    "y": 0,
+    "safety_score": 0.952,
     "rank": 2
   },
   {
     "id": "S3",
-    "x": 1,
-    "y": 0,
-    "safety_score": 0.91,
+    "x": 0,
+    "y": 1,
+    "safety_score": 0.952,
     "rank": 3
+  },
+  {
+    "id": "S4",
+    "x": 1,
+    "y": 1,
+    "safety_score": 0.952,
+    "rank": 4
+  },
+  {
+    "id": "S5",
+    "x": 0,
+    "y": 2,
+    "safety_score": 0.952,
+    "rank": 5
+  },
+  {
+    "id": "S6",
+    "x": 1,
+    "y": 2,
+    "safety_score": 0.952,
+    "rank": 6
   }
 ]
