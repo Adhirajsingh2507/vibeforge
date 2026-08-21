@@ -1,0 +1,23 @@
+[
+  {
+    "t": 0,
+    "x": 0,
+    "y": 0,
+    "heading": 90,
+    "mode": "full"
+  },
+  {
+    "t": 1,
+    "x": 1,
+    "y": 0,
+    "heading": 90,
+    "mode": "full"
+  },
+  {
+    "t": 2,
+    "x": 1,
+    "y": 1,
+    "heading": 45,
+    "mode": "cautious"
+  }
+]
