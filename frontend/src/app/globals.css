@@ -2,13 +2,25 @@
 
 :root {
   --background: #000000;
-  --foreground: #ffffff;
-  --muted: #6b7280;
-  --border: rgba(255, 255, 255, 0.08);
-  --surface: rgba(255, 255, 255, 0.03);
-  --surface-hover: rgba(255, 255, 255, 0.06);
-  --accent: #ffffff;
-  --dim: rgba(255, 255, 255, 0.5);
+  --foreground: #e8e4d9;
+  --muted: #6b6860;
+  --border: rgba(232, 228, 217, 0.06);
+  --surface: rgba(232, 228, 217, 0.03);
+  --surface-hover: rgba(232, 228, 217, 0.06);
+  --accent: #e8e4d9;
+  --dim: rgba(232, 228, 217, 0.5);
+  --panel: rgba(232, 228, 217, 0.02);
+  --panel-border: rgba(232, 228, 217, 0.06);
+  --green: #7dcea0;
+  --amber: #d4a056;
+  --red: #c9615a;
+  --blue: #6ea8d4;
+  --cream: #e8e4d9;
+  --cream-dim: rgba(232, 228, 217, 0.4);
+  --cream-faint: rgba(232, 228, 217, 0.12);
+  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-mono: 'DM Mono', 'SF Mono', ui-monospace, monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 @theme inline {
@@ -21,14 +33,21 @@
   --color-dim: var(--dim);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 * {
-  border-color: var(--border);
+  border-color: var(--panel-border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 13px;
 }
 
 @keyframes pulse-slow {
@@ -38,4 +57,36 @@ body {
 
 .animate-pulse-slow {
   animation: pulse-slow 3s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.animate-blink {
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(232, 228, 217, 0.35);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(200%); }
 }

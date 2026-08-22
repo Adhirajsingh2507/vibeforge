@@ -1,29 +1,22 @@
 import type { Tile } from "@/lib/types";
 import { CLASS_TO_BLOCK, type BlockId } from "./blocks";
 
-/** Blocks per scanned cell. Each API tile becomes a SUBDIV x SUBDIV patch. */
-export const SUBDIV = 12;
-/** Unmapped fringe around the scanned area, in blocks. */
-export const PAD = 12;
-/** Ground level under the lowest terrain. */
-export const BASE_Y = 8;
-/** Vertical exaggeration on the measured elevation (metres -> blocks). */
-export const Z_SCALE = 24;
+export const SUBDIV = 16;
+export const PAD = 24;
+export const BASE_Y = 10;
+export const Z_SCALE = 32;
 
-/** Per-class relief in blocks, applied on top of measured elevation. */
 const RELIEF: Record<string, number> = {
   compact_soil: 0,
   soil: -0.5,
-  loose_soil: -1,
-  rock: 3,
-  crater: -5,
-  shadow: -1.5,
-  waterbed: -2.5,
-  mineral_edge: 1.5,
+  loose_soil: -1.2,
+  rock: 4,
+  crater: -7,
+  shadow: -2,
+  waterbed: -3,
+  mineral_edge: 2,
   unknown: 0,
 };
-
-/* ------------------------------------------------------------------- noise */
 
 function hash2(x: number, y: number, seed: number) {
   let h = x * 374761393 + y * 668265263 + seed * 1442695040;
@@ -31,7 +24,7 @@ function hash2(x: number, y: number, seed: number) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-const smooth = (t: number) => t * t * (3 - 2 * t);
+const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
 
 function valueNoise(x: number, y: number, seed: number) {
   const xi = Math.floor(x);
@@ -47,7 +40,7 @@ function valueNoise(x: number, y: number, seed: number) {
   return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
 }
 
-function fbm(x: number, y: number, seed: number, octaves = 4) {
+function fbm(x: number, y: number, seed: number, octaves = 5) {
   let sum = 0;
   let amp = 1;
   let freq = 1;
@@ -55,28 +48,39 @@ function fbm(x: number, y: number, seed: number, octaves = 4) {
   for (let i = 0; i < octaves; i++) {
     sum += valueNoise(x * freq, y * freq, seed + i * 97) * amp;
     norm += amp;
-    amp *= 0.5;
-    freq *= 2;
+    amp *= 0.48;
+    freq *= 2.1;
   }
   return sum / norm;
 }
 
-/* ------------------------------------------------------------------- world */
+function ridgedNoise(x: number, y: number, seed: number) {
+  return 1 - Math.abs(valueNoise(x, y, seed) * 2 - 1);
+}
+
+function ridgedFbm(x: number, y: number, seed: number, octaves = 4) {
+  let sum = 0;
+  let amp = 1;
+  let freq = 1;
+  let norm = 0;
+  for (let i = 0; i < octaves; i++) {
+    const n = ridgedNoise(x * freq, y * freq, seed + i * 97);
+    sum += n * n * amp;
+    norm += amp;
+    amp *= 0.45;
+    freq *= 2.2;
+  }
+  return sum / norm;
+}
 
 export interface World {
-  /** Width (x) and depth (z) in blocks. */
   W: number;
   D: number;
-  /** Column surface height, indexed z * W + x. */
   height: Int16Array;
-  /** Surface block type per column. */
   surface: BlockId[];
-  /** Index into `tiles` for the column, or -1 when unmapped. */
   tileOf: Int16Array;
   tiles: Tile[];
-  /** Bounds of the scanned (walkable) region, in blocks. */
   bounds: { x0: number; x1: number; z0: number; z1: number };
-  /** Grid dimensions of the source scan. */
   cols: number;
   rows: number;
 }
@@ -90,7 +94,6 @@ export function generateWorld(tiles: Tile[]): World {
   const W = cols * SUBDIV + PAD * 2;
   const D = rows * SUBDIV + PAD * 2;
 
-  // Fast lookup of the source tile grid.
   const grid: (Tile | undefined)[][] = Array.from({ length: rows }, () =>
     Array(cols).fill(undefined)
   );
@@ -111,7 +114,6 @@ export function generateWorld(tiles: Tile[]): World {
     z1: PAD + rows * SUBDIV - 1,
   };
 
-  /** Continuous tile-space coords for a block column. */
   const toTileSpace = (x: number, z: number) => ({
     tx: (x - PAD) / SUBDIV - 0.5,
     tz: (z - PAD) / SUBDIV - 0.5,
@@ -123,7 +125,6 @@ export function generateWorld(tiles: Tile[]): World {
   const sampleTile = (tx: number, tz: number): Tile | undefined =>
     grid[clampTile(Math.round(tz), rows)]?.[clampTile(Math.round(tx), cols)];
 
-  /** Bilinear blend of a per-tile scalar, so terrain flows between cells. */
   const blend = (tx: number, tz: number, f: (t: Tile) => number): number => {
     const x0 = Math.floor(tx);
     const z0 = Math.floor(tz);
@@ -150,27 +151,26 @@ export function generateWorld(tiles: Tile[]): World {
       const inScan =
         x >= bounds.x0 && x <= bounds.x1 && z >= bounds.z0 && z <= bounds.z1;
 
-      // Jitter the classification sample so patch borders look eroded rather
-      // than perfectly square.
-      const jx = tx + (fbm(x * 0.14, z * 0.14, 11) - 0.5) * 0.55;
-      const jz = tz + (fbm(x * 0.14 + 40, z * 0.14 + 40, 23) - 0.5) * 0.55;
+      const jx = tx + (fbm(x * 0.12, z * 0.12, 11) - 0.5) * 0.6;
+      const jz = tz + (fbm(x * 0.12 + 40, z * 0.12 + 40, 23) - 0.5) * 0.6;
       const cls = sampleTile(jx, jz);
 
       const elev = blend(tx, tz, (t) => t.z) * Z_SCALE;
       const relief = blend(tx, tz, (t) => RELIEF[t.class] ?? 0);
 
-      const detail = (fbm(x * 0.09, z * 0.09, 5) - 0.5) * 3.2;
-      const fine = (fbm(x * 0.31, z * 0.31, 31) - 0.5) * 1.1;
+      const detail = (fbm(x * 0.07, z * 0.07, 5) - 0.5) * 4.5;
+      const fine = (fbm(x * 0.25, z * 0.25, 31) - 0.5) * 1.4;
+      const ridge = ridgedFbm(x * 0.04, z * 0.04, 42) * 3.5;
+      const micro = (fbm(x * 0.5, z * 0.5, 67) - 0.5) * 0.6;
 
-      let h = BASE_Y + elev + relief + detail + fine;
+      let h = BASE_Y + elev + relief + detail + fine + ridge + micro;
 
       if (!inScan) {
-        // Fringe falls away toward the horizon so the mapped plateau reads as
-        // an island of known terrain.
         const dx = Math.max(bounds.x0 - x, x - bounds.x1, 0);
         const dz = Math.max(bounds.z0 - z, z - bounds.z1, 0);
         const d = Math.hypot(dx, dz);
-        h -= Math.pow(d / PAD, 1.6) * 9;
+        h -= Math.pow(d / PAD, 1.4) * 12;
+        h += (fbm(x * 0.06, z * 0.06, 99) - 0.5) * 6;
       }
 
       height[i] = Math.max(1, Math.round(h));
@@ -185,36 +185,44 @@ export function generateWorld(tiles: Tile[]): World {
     }
   }
 
-  const world: World = {
-    W,
-    D,
-    height,
-    surface,
-    tileOf,
-    tiles,
-    bounds,
-    cols,
-    rows,
-  };
+  const world: World = { W, D, height, surface, tileOf, tiles, bounds, cols, rows };
 
   scatterBoulders(world);
+  carveErosion(world);
   return world;
 }
 
-/** Raises isolated 1-2 block bumps on rocky terrain so it isn't a smooth field. */
 function scatterBoulders(w: World) {
   for (let z = w.bounds.z0; z <= w.bounds.z1; z++) {
     for (let x = w.bounds.x0; x <= w.bounds.x1; x++) {
       const i = z * w.W + x;
       if (w.surface[i] !== "stone" && w.surface[i] !== "ore") continue;
-      if (hash2(x, z, 777) > 0.93) {
-        w.height[i] += 1 + (hash2(x, z, 778) > 0.6 ? 1 : 0);
+      const r = hash2(x, z, 777);
+      if (r > 0.90) {
+        w.height[i] += 1 + (hash2(x, z, 778) > 0.5 ? 1 : 0) + (hash2(x, z, 779) > 0.8 ? 1 : 0);
       }
     }
   }
 }
 
-/* --------------------------------------------------------------- accessors */
+function carveErosion(w: World) {
+  for (let z = w.bounds.z0 + 1; z < w.bounds.z1; z++) {
+    for (let x = w.bounds.x0 + 1; x < w.bounds.x1; x++) {
+      const i = z * w.W + x;
+      if (w.surface[i] !== "basalt") continue;
+      const neighbors = [
+        w.height[(z - 1) * w.W + x],
+        w.height[(z + 1) * w.W + x],
+        w.height[z * w.W + x - 1],
+        w.height[z * w.W + x + 1],
+      ];
+      const avg = neighbors.reduce((a, b) => a + b, 0) / 4;
+      if (w.height[i] > avg + 2) {
+        w.height[i] = Math.round(avg + 1);
+      }
+    }
+  }
+}
 
 export function heightAt(w: World, x: number, z: number): number {
   const xi = Math.floor(x);
@@ -238,7 +246,6 @@ export function tileAt(w: World, x: number, z: number): Tile | null {
   return t < 0 ? null : w.tiles[t];
 }
 
-/** Converts scan-grid coordinates to world-block centre coordinates. */
 export function gridToWorld(x: number, y: number) {
   return {
     x: PAD + (x + 0.5) * SUBDIV,

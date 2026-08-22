@@ -44,10 +44,17 @@ export default function Game({
   const world = useMemo(() => generateWorld(tiles), [tiles]);
 
   const spawn = useMemo(() => {
-    const start = path[0] ?? { x: 0, y: 0 };
-    const { x, z } = gridToWorld(start.x, start.y);
+    let maxX = 0;
+    let maxY = 0;
+    for (const t of tiles) {
+      if (t.x > maxX) maxX = t.x;
+      if (t.y > maxY) maxY = t.y;
+    }
+    const centerX = Math.floor(maxX / 2);
+    const centerY = Math.floor(maxY / 2);
+    const { x, z } = gridToWorld(centerX, centerY);
     return new THREE.Vector3(x, heightAt(world, x, z) + 1, z);
-  }, [world, path]);
+  }, [world, tiles]);
 
   const [fps, setFps] = useState(0);
   const [player, setPlayer] = useState<PlayerState>({

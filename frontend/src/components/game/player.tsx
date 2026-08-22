@@ -8,12 +8,13 @@ import { heightAt, type World } from "@/lib/game/worldgen";
 const EYE = 8;
 const RADIUS = 0.45;
 const SPEED = 14;
-const FAST = 24;
+const FAST = 28;
 const GRAVITY = 26;
 const STEP = 1.05;
-const ACCEL = 10;
-const DECEL = 6;
-const TURN = 2.0;
+const ACCEL = 12;
+const DECEL = 7;
+const MOUSE_SENS = 0.002;
+const JUMP_VEL = 10;
 
 export interface PlayerState {
   pos: THREE.Vector3;
@@ -45,50 +46,87 @@ export default function Player({
   thirdPerson?: boolean;
   onState: (s: PlayerState) => void;
 }) {
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
   const pos = useRef(spawn.clone());
   const vel = useRef(new THREE.Vector3());
   const yaw = useRef(0);
+  const pitch = useRef(0);
   const vy = useRef(0);
   const grounded = useRef(false);
   const keys = useRef<Record<string, boolean>>({});
   const emit = useRef(0);
   const smoothY = useRef(spawn.y);
+  const locked = useRef(false);
 
   useEffect(() => {
-    const down = (e: KeyboardEvent) => { keys.current[e.code] = true; };
+    const canvas = gl.domElement;
+
+    const onClick = () => {
+      if (!locked.current) {
+        canvas.requestPointerLock();
+      }
+    };
+
+    const onLockChange = () => {
+      locked.current = document.pointerLockElement === canvas;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!locked.current) return;
+      yaw.current -= e.movementX * MOUSE_SENS;
+      pitch.current = THREE.MathUtils.clamp(
+        pitch.current - e.movementY * MOUSE_SENS,
+        -Math.PI / 2 + 0.05,
+        Math.PI / 2 - 0.05
+      );
+    };
+
+    const down = (e: KeyboardEvent) => {
+      keys.current[e.code] = true;
+      if (e.code === "Escape") {
+        document.exitPointerLock();
+      }
+    };
     const up = (e: KeyboardEvent) => { keys.current[e.code] = false; };
+
+    canvas.addEventListener("click", onClick);
+    document.addEventListener("pointerlockchange", onLockChange);
+    document.addEventListener("mousemove", onMouseMove);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => {
+      canvas.removeEventListener("click", onClick);
+      document.removeEventListener("pointerlockchange", onLockChange);
+      document.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, []);
+  }, [gl]);
 
   useFrame((_, rawDelta) => {
     const dt = Math.min(rawDelta, 0.05);
     const k = keys.current;
-
-    // Arrow left/right turn
-    if (k["ArrowLeft"] || k["KeyA"]) yaw.current += TURN * dt;
-    if (k["ArrowRight"] || k["KeyD"]) yaw.current -= TURN * dt;
 
     const fwd = new THREE.Vector3(
       -Math.sin(yaw.current),
       0,
       -Math.cos(yaw.current)
     );
+    const right = new THREE.Vector3(fwd.z, 0, -fwd.x);
 
     let inputZ = 0;
+    let inputX = 0;
     if (k["ArrowUp"] || k["KeyW"]) inputZ += 1;
     if (k["ArrowDown"] || k["KeyS"]) inputZ -= 1;
+    if (k["ArrowLeft"] || k["KeyA"]) inputX -= 1;
+    if (k["ArrowRight"] || k["KeyD"]) inputX += 1;
 
     const sprinting = !!(k["ShiftLeft"] || k["ShiftRight"]);
     const maxSpeed = sprinting ? FAST : SPEED;
-    const hasInput = inputZ !== 0;
+    const hasInput = inputZ !== 0 || inputX !== 0;
 
-    const desired = fwd.clone().multiplyScalar(inputZ * maxSpeed);
+    const desired = fwd.clone().multiplyScalar(inputZ).add(right.clone().multiplyScalar(inputX));
+    if (desired.lengthSq() > 0) desired.normalize().multiplyScalar(maxSpeed);
 
     const v = vel.current;
     if (hasInput) {
@@ -98,6 +136,11 @@ export default function Player({
       v.x *= Math.max(0, 1 - DECEL * dt);
       v.z *= Math.max(0, 1 - DECEL * dt);
       if (v.lengthSq() < 0.001) { v.x = 0; v.z = 0; }
+    }
+
+    if (k["Space"] && grounded.current) {
+      vy.current = JUMP_VEL;
+      grounded.current = false;
     }
 
     const p = pos.current;
@@ -137,14 +180,15 @@ export default function Player({
 
     smoothY.current += (p.y - smoothY.current) * Math.min(1, 8 * dt);
 
-    // Camera follows from behind and above
     const camTarget = new THREE.Vector3(
-      p.x - fwd.x * 10,
+      p.x,
       smoothY.current + EYE,
-      p.z - fwd.z * 10
+      p.z
     );
-    camera.position.lerp(camTarget, Math.min(1, 4 * dt));
-    camera.lookAt(p.x, smoothY.current + 1, p.z);
+    camera.position.lerp(camTarget, Math.min(1, 20 * dt));
+    camera.rotation.order = "YXZ";
+    camera.rotation.y = yaw.current;
+    camera.rotation.x = pitch.current;
 
     emit.current += dt;
     if (emit.current > 0.1) {

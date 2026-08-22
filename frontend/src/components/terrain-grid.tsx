@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { Tile, PathPoint, Site, Boundary } from "@/lib/types";
 
 const ZONE_COLORS: Record<number, string> = {
@@ -55,23 +55,22 @@ export default function TerrainGrid({
     <div className="space-y-2">
       <div className="overflow-x-auto border rounded bg-black">
         <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ minWidth: 420 }}>
-          {tiles.map((tile) => {
+          {useMemo(() => tiles.map((tile) => {
             const x = PAD + tile.x * (CELL + GAP);
             const y = PAD + tile.y * (CELL + GAP);
-            const active = hovered?.x === tile.x && hovered?.y === tile.y;
             return (
               <g
                 key={`${tile.x}-${tile.y}`}
                 onMouseEnter={() => setHovered(tile)}
                 onMouseLeave={() => setHovered(null)}
-                className="cursor-crosshair"
+                className="cursor-crosshair group"
               >
                 <rect
                   x={x} y={y} width={CELL} height={CELL}
                   fill={ZONE_COLORS[tile.zone]}
-                  opacity={active ? 1 : 0.85}
-                  stroke={active ? "#fff" : "none"}
-                  strokeWidth={active ? 1.5 : 0}
+                  className="opacity-85 group-hover:opacity-100 group-hover:stroke-white transition-all"
+                  strokeWidth={1.5}
+                  stroke="transparent"
                 />
                 <text
                   x={x + CELL / 2} y={y + CELL / 2 + 5}
@@ -79,12 +78,13 @@ export default function TerrainGrid({
                   fill={ZONE_TEXT[tile.zone]}
                   fontSize="13" fontWeight="700"
                   fontFamily="Helvetica, Arial, sans-serif"
+                  style={{ pointerEvents: "none" }}
                 >
                   {(tile.safety_score * 100).toFixed(0)}
                 </text>
               </g>
             );
-          })}
+          }), [tiles])}
 
           {boundaries.map((b, i) => (
             <path

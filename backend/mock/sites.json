@@ -1,44 +1,58 @@
 [
   {
     "id": "S1",
-    "x": 0,
+    "x": 47,
     "y": 0,
-    "safety_score": 0.952,
+    "safety_score": 0.936,
     "rank": 1
   },
   {
     "id": "S2",
-    "x": 1,
-    "y": 0,
-    "safety_score": 0.952,
+    "x": 46,
+    "y": 31,
+    "safety_score": 0.907,
     "rank": 2
   },
   {
     "id": "S3",
-    "x": 0,
-    "y": 1,
-    "safety_score": 0.952,
+    "x": 17,
+    "y": 32,
+    "safety_score": 0.88,
     "rank": 3
   },
   {
     "id": "S4",
-    "x": 1,
-    "y": 1,
-    "safety_score": 0.952,
+    "x": 31,
+    "y": 36,
+    "safety_score": 0.88,
     "rank": 4
   },
   {
     "id": "S5",
-    "x": 0,
-    "y": 2,
-    "safety_score": 0.952,
+    "x": 35,
+    "y": 3,
+    "safety_score": 0.878,
     "rank": 5
   },
   {
     "id": "S6",
     "x": 1,
-    "y": 2,
-    "safety_score": 0.952,
+    "y": 22,
+    "safety_score": 0.877,
     "rank": 6
+  },
+  {
+    "id": "S7",
+    "x": 0,
+    "y": 6,
+    "safety_score": 0.876,
+    "rank": 7
+  },
+  {
+    "id": "S8",
+    "x": 3,
+    "y": 8,
+    "safety_score": 0.876,
+    "rank": 8
   }
 ]
